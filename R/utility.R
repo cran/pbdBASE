@@ -192,6 +192,7 @@ base.gmat <- function(dx, proc.dest="all")
   ISRCPROC <- 0
   
   xattrs <- attributes(dx@Data)
+  names <- xattrs$dimnames
   
   dim <- dx@dim
   ldim <- dx@ldim
@@ -231,6 +232,10 @@ base.gmat <- function(dx, proc.dest="all")
   else {
     out <- matrix(out, nrow=dim[1], ncol=dim[2])
     if (length(xattrs)>1){
+      if (length(names)>0){
+        xattrs$dimnames <- NULL
+        
+      }
       oattrs <- union(attributes(out), xattrs[-1])
       names(oattrs) <- names(xattrs)
       attributes(out) <- oattrs
@@ -426,7 +431,6 @@ base.reblock <- function(dx, bldim=dx@bldim, ICTXT)
 #    descb <- rep(0, 9)
     descb[2] <- -1
   }
-
   ret <- .Call("R_PDGEMR2D",
                as.integer(m), as.integer(n),
                dx@Data, as.integer(descx),
@@ -436,17 +440,7 @@ base.reblock <- function(dx, bldim=dx@bldim, ICTXT)
                as.integer(dx@ldim[1]), as.integer(dx@ldim[2]),
                PACKAGE="pbdBASE"
             )
-
-#  ret <- .Fortran("PDGEMR2D",
-#                   as.integer(m), as.integer(n),
-#                   dx@Data, 
-#                   as.integer(1), as.integer(1), as.integer(descx),
-#                   B=matrix(0, TldimB[1], TldimB[2]),
-#                   as.integer(1), as.integer(1), as.integer(descb),
-#                   as.integer(ICTXT),
-#                   PACKAGE="pbdBASE", DUP=T
-#                  )$B
-
+    
     ret <- ret + 0
     dB@Data <- ret
     
@@ -524,7 +518,7 @@ base.mat.to.ddmat <- function(x, bldim=.BLDIM, ICTXT=0)
   else if (diff(bldim) != 0)
     warning("Most ScaLAPACK routines do not allow for non-square blocking.  This is highly non-advised.")
 
-  blacs_ <- blacs(ICTXT=ICTXT)
+  blacs_ <- base.blacs(ICTXT=ICTXT)
   nprows <- blacs_$NPROW
   npcols <- blacs_$NPCOL
   dim <- dim(x)
@@ -591,3 +585,62 @@ base.insert <- function(dx, vec, i, j)
   return(out)
 }
 
+
+#---------------------------------------------
+# *bind functions
+#---------------------------------------------
+
+base.rbind <- function(..., ICTXT=0)
+{
+  args <- list(...)
+  
+  return( base.rbind2(args=args, ICTXT=ICTXT) )
+}
+
+base.rbind2 <- function(args, ICTXT=0)
+{ 
+#  args <- list(...)
+  
+  oldctxt <- args[[1]]@CTXT
+  
+  args <- lapply(args, 
+    FUN=function(dx) base.redistribute(dx=dx, bldim=dx@bldim, ICTXT=1)
+  )
+  
+  dim <- c(sum(sapply(args, function(x) dim(x)[1])), args[[1]]@dim[2])
+  bldim <- args[[1]]@bldim
+  ldim <- base.numroc(dim=dim, bldim=bldim, ICTXT=1, fixme=TRUE)
+  
+  Data <- lapply(args, submatrix)
+  
+  ret <- new("ddmatrix", Data=Reduce(base::rbind, Data), dim=dim, ldim=ldim, bldim=bldim, CTXT=1)
+  
+  if (ICTXT!=1)
+    ret <- base.redistribute(dx=ret, bldim=ret@bldim, ICTXT=ICTXT)
+  
+  return( ret )
+}
+
+base.cbind <- function(..., ICTXT=0)
+{
+  args <- list(...)
+  
+  oldctxt <- args[[1]]@CTXT
+  
+  args <- lapply(args, 
+    FUN=function(dx) base.redistribute(dx=dx, bldim=dx@bldim, ICTXT=2)
+  )
+  
+  dim <- c(args[[1]]@dim[1], sum(sapply(args, function(x) dim(x)[2])))
+  bldim <- args[[1]]@bldim
+  ldim <- base.numroc(dim=dim, bldim=bldim, ICTXT=2, fixme=TRUE)
+  
+  Data <- lapply(args, submatrix)
+  
+  ret <- new("ddmatrix", Data=Reduce(base::cbind, Data), dim=dim, ldim=ldim, bldim=bldim, CTXT=2)
+  
+  if (ICTXT!=2)
+    ret <- base.redistribute(dx=ret, bldim=ret@bldim, ICTXT=ICTXT)
+  
+  return( ret )
+}
