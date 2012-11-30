@@ -10,9 +10,10 @@
 \alias{as.matrix,ddmatrix-method}
 \alias{as.matrix}
 
-\title{ Dimensions of Distributed Matrices }
+\title{ Distributed-to-non-distributed Matrix Converters }
 \description{
-  Functions to get dimension information from a distributed matrix.
+  Converts objects of class \code{ddmatrix} to the requested
+  non-distributed type.
 }
 \section{Methods}{
 \describe{

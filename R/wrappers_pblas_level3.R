@@ -4,41 +4,30 @@
 # ------------------------------------------------
 # ################################################
 
-base.pdtran <- function(a)
+base.rpdtran <- function(x)
 {
-  ICTXT <- a@CTXT
+  ICTXT <- x@CTXT
   blacs_ <- base.blacs(ICTXT=ICTXT)
-  MYROW <- blacs_$MYROW
-  MYCOL <- blacs_$MYCOL
   
-  m <- a@dim[2]
-  n <- a@dim[1]
+  m <- x@dim[2]
+  n <- x@dim[1]
   
-  desca <- base.descinit(a@dim, a@bldim, a@ldim, ICTXT=ICTXT)
+  desca <- base.descinit(dim=x@dim, bldim=x@bldim, ldim=x@ldim, ICTXT=ICTXT)
 
   cdim <- c(m, n)
-  cldim <- base.numroc(cdim, a@bldim, ICTXT=ICTXT)
+  cldim <- base.numroc(cdim, x@bldim, ICTXT=ICTXT)
 
   c <- new("ddmatrix", Data=matrix(nrow=0, ncol=0),
-                       dim=cdim, ldim=cldim, bldim=a@bldim, CTXT=ICTXT)
+                       dim=cdim, ldim=cldim, bldim=x@bldim, CTXT=ICTXT)
 
   descc <- base.descinit(c@dim, c@bldim, c@ldim, ICTXT=ICTXT)
 
   ret <- .Call("R_PDTRAN",
-                  a@Data, as.integer(cldim),
-                  as.integer(ICTXT), as.integer(MYROW), as.integer(MYCOL),
-                  as.integer(desca), as.integer(descc),
-                  as.integer(m), as.integer(n),
-                  PACKAGE="pbdBASE"
-                 )
-
-#  ret <- .Call("R_PDTRAN",
-#                  as.integer(m), as.integer(n),
-#                  a@Data, as.integer(desca), 
-#                  as.integer(cldim), as.integer(descc),
-#                  as.integer(ICTXT),
-#                  PACKAGE="pbdBASE"
-#                 )
+                as.integer(m), as.integer(n),
+                x@Data, as.integer(desca),
+                as.integer(cldim), as.integer(descc),
+                PACKAGE="pbdBASE"
+              )
 
   c@Data <- ret
 
@@ -51,34 +40,39 @@ base.pdtran <- function(a)
 # ------------------------------------------------
 # ################################################
 
-base.pdgemm <- function(a, b)
+base.rpdgemm <- function(x, y, outbldim=x@bldim)
 {
-  ICTXT <- a@CTXT
-  blacs_ <- base.blacs(ICTXT=a@CTXT)
-  MYROW <- blacs_$MYROW
-  MYCOL <- blacs_$MYCOL
-
-  m <- a@dim[1]
-  n <- b@dim[2]
-  k <- b@dim[1]
-
-  cdim <- c(a@dim[1], b@dim[2])
+  if (length(outbldim)==1L)
+    outbldim <- rep(outbldim, 2)
   
-  cldim <- base.numroc(cdim, a@bldim, ICTXT=ICTXT)
+  ICTXT <- x@CTXT
   
-  c <- new("ddmatrix", Data=matrix(nrow=0, ncol=0),
-                       dim=cdim, ldim=cldim, bldim=a@bldim, CTXT=ICTXT)
-
-  desca <- base.descinit(a@dim, a@bldim, a@ldim, ICTXT=ICTXT)
-  descb <- base.descinit(b@dim, b@bldim, b@ldim, ICTXT=ICTXT)
-  descc <- base.descinit(c@dim, c@bldim, c@ldim, ICTXT=ICTXT)
+  m <- x@dim[1L]
+  n <- y@dim[2L]
+  k <- y@dim[1L]
   
-  c@Data <- .Call("R_PDGEMM",
-                  a@Data, b@Data, as.integer(cldim),
-                  as.integer(ICTXT), as.integer(MYROW), as.integer(MYCOL),
-                  as.integer(desca), as.integer(descb), as.integer(descc),
+  bldimx <- x@bldim
+  bldimy <- y@bldim
+  
+  cdim <- c(x@dim[1L], y@dim[2L])
+  cldim <- base.numroc(cdim, outbldim, ICTXT=ICTXT)
+  
+  desca <- base.descinit(dim=x@dim, bldim=bldimx, ldim=x@ldim, ICTXT=ICTXT)
+  descb <- base.descinit(dim=y@dim, bldim=bldimy, ldim=y@ldim, ICTXT=ICTXT)
+  descc <- base.descinit(dim=cdim, bldim=outbldim, ldim=cldim, ICTXT=ICTXT)
+  
+  trans <- 'N'
+  
+  ret <- .Call("R_PDGEMM",
+                  as.character(trans), as.character(trans),
                   as.integer(m), as.integer(n), as.integer(k),
+                  x@Data, as.integer(desca),
+                  y@Data, as.integer(descb),
+                  as.integer(cldim), as.integer(descc),
                   PACKAGE="pbdBASE"
                  )
+  
+  c <- new("ddmatrix", Data=ret, dim=cdim, ldim=cldim, bldim=outbldim, CTXT=ICTXT)
+  
   return(c)
 }

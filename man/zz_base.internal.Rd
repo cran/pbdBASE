@@ -29,10 +29,10 @@
 \alias{base.numroc}
 \alias{base.ownany}
 \alias{base.pcoord}
-\alias{base.pdgemm}
-\alias{base.pdlaprnt}
-\alias{base.pdpotrf}
-\alias{base.pdtran}
+\alias{base.rpdgemm}
+\alias{base.rpdlaprnt}
+\alias{base.rpdpotrf}
+\alias{base.rpdtran}
 \alias{base.pnum}
 \alias{base.procgrid}
 \alias{base.reblock}
@@ -47,6 +47,16 @@
 \alias{base.valid_context}
 \alias{base.vecops}
 \alias{base.whatdo}
+
+\alias{base.rpdorgqr}
+\alias{base.rpdormqr}
+\alias{base.rpdtrsv}
+\alias{base.rpdtzrzf}
+\alias{base.rpdgeqpf}
+\alias{base.qr.R}
+\alias{base.rbind}
+\alias{base.cbind}
+\alias{base.rbind2}
 
 \alias{.conflicts.OK}
 
