@@ -2,8 +2,14 @@
 #include <Rinternals.h>
 #include "base_global.h"
 
-SEXP R_PDGESV(SEXP N, SEXP NRHS, SEXP MXLDIMS, 
-  SEXP A, SEXP ALDIM, SEXP DESCA,
+
+// -------------------------------------------------------- 
+// Linear equations 
+// -------------------------------------------------------- 
+
+
+/* Solving systems of linear equations */
+SEXP R_PDGESV(SEXP N, SEXP NRHS, SEXP MXLDIMS, SEXP A, SEXP ALDIM, SEXP DESCA,
   SEXP B, SEXP BLDIM, SEXP DESCB)
 {
   int i, *pt_ALDIM = INTEGER(ALDIM), *pt_BLDIM = INTEGER(BLDIM);
@@ -41,7 +47,6 @@ SEXP R_PDGESV(SEXP N, SEXP NRHS, SEXP MXLDIMS,
   }
   
   const int IJ = 1;
-/*  IPIV ( MXLDIMS(1) + DESCA(6) )*/
   int * ipiv;
   ipiv = (int *) R_alloc(INTEGER(MXLDIMS)[0] + INTEGER(DESCA)[5], sizeof(int));
   
@@ -54,15 +59,85 @@ SEXP R_PDGESV(SEXP N, SEXP NRHS, SEXP MXLDIMS,
   
   /* Return. */
   UNPROTECT(4);
-  // Free(A_OUT);    // .Call takes care of this.
   return(RET);
 } /* End of R_PDGESV(). */
 
 
+/* Matrix inverse */
+SEXP R_PDGETRI(SEXP A, SEXP CLDIM, SEXP DESCA, SEXP N)
+{
+  int *pt_CLDIM = INTEGER(CLDIM), *ipiv, *iwork;
+  int i, lwork, liwork;
+  double *pt_A, *pt_C, *work;
+  
+  const int query = -1, IJ = 1;
+  double tmp_A = 0, tmp1 = 0;
+  
+  /* R objects. */
+  SEXP RET, RET_NAMES, INFO, C;
+  
+  PROTECT(RET = allocVector(VECSXP, 2));
+  PROTECT(RET_NAMES = allocVector(STRSXP, 2));
+  PROTECT(INFO = allocVector(INTSXP, 1));
+  PROTECT(C = allocMatrix(REALSXP, pt_CLDIM[0], pt_CLDIM[1]));
+  
+  SET_VECTOR_ELT(RET, 0, INFO);
+  SET_VECTOR_ELT(RET, 1, C);
+  SET_STRING_ELT(RET_NAMES, 0, mkChar("info")); 
+  SET_STRING_ELT(RET_NAMES, 1, mkChar("A")); 
+  setAttrib(RET, R_NamesSymbol, RET_NAMES);
+  
+  /* Copy A -> C and set INFO and return R objects. */
+  INTEGER(INFO)[0] = 0;
+  pt_A = REAL(A);
+  pt_C = REAL(C);
+  for(i = 0; i < pt_CLDIM[0] * pt_CLDIM[1]; i++){
+    *pt_C = *pt_A;
+    pt_A++;
+    pt_C++;
+  }
+  
+  /* IPIV ( N + DESCA(6) ) */
+  ipiv = (int *) R_alloc(INTEGER(N)[0] + INTEGER(DESCA)[5], sizeof(int));
+  
+  /* LU decomposition */
+  INTEGER(INFO)[0] = 0;
+  F77_CALL(pdgetrf)(INTEGER(N), INTEGER(N), REAL(C), &IJ, &IJ, 
+    INTEGER(DESCA), ipiv, INTEGER(INFO));
+  
+  /* workspace query for inverse */
+  INTEGER(INFO)[0] = 0;
+  F77_CALL(pdgetri)(INTEGER(N), &tmp_A, &IJ, &IJ, INTEGER(DESCA),
+    &IJ, &tmp1, &query, &liwork, &query, INTEGER(INFO));
+  
+  /* allocate work arrays and invert A */
+  lwork = (int) tmp1;
+  lwork = nonzero(lwork);
+  
+  work = (double *) R_alloc(lwork, sizeof(double));
+  
+  liwork = nonzero(liwork);
+  iwork = (int *) R_alloc(liwork, sizeof(int));
+  
+  INTEGER(INFO)[0] = 0;
+  F77_CALL(pdgetri)(INTEGER(N), REAL(C), &IJ, &IJ, INTEGER(DESCA),
+    ipiv, work, &lwork, iwork, &liwork, INTEGER(INFO));
+  
+  /* Return. */
+  UNPROTECT(4);
+  return(RET);
+} /* End of R_PDGETRI(). */
 
-SEXP R_PDGESVD(SEXP M, SEXP N, SEXP ASIZE, 
-                SEXP A, SEXP DESCA, SEXP ALDIM, SEXP ULDIM,
-                SEXP DESCU, SEXP VTLDIM, SEXP DESCVT, SEXP JOBU, SEXP JOBVT)
+
+
+// -------------------------------------------------------- 
+// Auxillary 
+// -------------------------------------------------------- 
+
+
+/* SVD */
+SEXP R_PDGESVD(SEXP M, SEXP N, SEXP ASIZE, SEXP A, SEXP DESCA, SEXP ALDIM, 
+  SEXP ULDIM, SEXP DESCU, SEXP VTLDIM, SEXP DESCVT, SEXP JOBU, SEXP JOBVT)
 {
   int i, *pt_ALDIM = INTEGER(ALDIM);
   double *A_OUT;
@@ -97,27 +172,29 @@ SEXP R_PDGESVD(SEXP M, SEXP N, SEXP ASIZE,
   i = pt_ALDIM[0] * pt_ALDIM[1];
   A_OUT = (double *) R_alloc(i, sizeof(double));
   memcpy(A_OUT, REAL(A), i * sizeof(double));
-
+  
   /* Query size of workspace */
-    INTEGER(INFO)[0] = 0;
-    F77_CALL(pdgesvd)(CHARPT(JOBU, 0), CHARPT(JOBVT, 0),
-      INTEGER(M), INTEGER(N),
-      &temp_A, &temp_IJ, &temp_IJ, INTEGER(DESCA),
-      &temp_A, &temp_A, &temp_IJ, &temp_IJ, INTEGER(DESCU),
-      &temp_A, &temp_IJ, &temp_IJ, INTEGER(DESCVT),
-      &temp_work, &temp_lwork, INTEGER(INFO));
-    temp_lwork = (int) temp_work;
-
-    /* Allocate work vector and calculate svd */
-    WORK = (double *) R_alloc(temp_lwork, sizeof(double));
+  INTEGER(INFO)[0] = 0;
+  F77_CALL(pdgesvd)(CHARPT(JOBU, 0), CHARPT(JOBVT, 0),
+    INTEGER(M), INTEGER(N),
+    &temp_A, &temp_IJ, &temp_IJ, INTEGER(DESCA),
+    &temp_A, &temp_A, &temp_IJ, &temp_IJ, INTEGER(DESCU),
+    &temp_A, &temp_IJ, &temp_IJ, INTEGER(DESCVT),
+    &temp_work, &temp_lwork, INTEGER(INFO));
     
-    INTEGER(INFO)[0] = 0;
-    F77_CALL(pdgesvd)(CHARPT(JOBU, 0), CHARPT(JOBVT, 0),
-      INTEGER(M), INTEGER(N),
-      A_OUT, &temp_IJ, &temp_IJ, INTEGER(DESCA),
-      REAL(D), REAL(U), &temp_IJ, &temp_IJ, INTEGER(DESCU),
-      REAL(VT), &temp_IJ, &temp_IJ, INTEGER(DESCVT),
-      WORK, &temp_lwork, INTEGER(INFO));
+  /* Allocate work vector and calculate svd */
+  temp_lwork = (int) temp_work;
+  temp_lwork = nonzero(temp_lwork);
+  
+  WORK = (double *) R_alloc(temp_lwork, sizeof(double));
+  
+  INTEGER(INFO)[0] = 0;
+  F77_CALL(pdgesvd)(CHARPT(JOBU, 0), CHARPT(JOBVT, 0),
+    INTEGER(M), INTEGER(N),
+    A_OUT, &temp_IJ, &temp_IJ, INTEGER(DESCA),
+    REAL(D), REAL(U), &temp_IJ, &temp_IJ, INTEGER(DESCU),
+    REAL(VT), &temp_IJ, &temp_IJ, INTEGER(DESCVT),
+    WORK, &temp_lwork, INTEGER(INFO));
 
   /* Return. */
   UNPROTECT(6);
@@ -127,68 +204,7 @@ SEXP R_PDGESVD(SEXP M, SEXP N, SEXP ASIZE,
 
 
 
-SEXP R_PDGETRI(SEXP A, SEXP CLDIM, SEXP DESCA, SEXP N)
-{
-  int *pt_CLDIM = INTEGER(CLDIM), *ipiv, *iwork;
-  int i, lwork, liwork;
-  double *pt_A, *pt_C, *work;
-  
-  const int query = -1, IJ = 1;
-  double tmp_A = 0, tmp1 = 0;
-  
-  /* R objects. */
-  SEXP RET, RET_NAMES, INFO, C;
-  
-  PROTECT(RET = allocVector(VECSXP, 2));
-  PROTECT(RET_NAMES = allocVector(STRSXP, 2));
-  PROTECT(INFO = allocVector(INTSXP, 1));
-  PROTECT(C = allocMatrix(REALSXP, pt_CLDIM[0], pt_CLDIM[1]));
-
-  SET_VECTOR_ELT(RET, 0, INFO);
-  SET_VECTOR_ELT(RET, 1, C);
-  SET_STRING_ELT(RET_NAMES, 0, mkChar("info")); 
-  SET_STRING_ELT(RET_NAMES, 1, mkChar("A")); 
-  setAttrib(RET, R_NamesSymbol, RET_NAMES);
-
-  /* Copy A -> C and set INFO and return R objects. */
-  INTEGER(INFO)[0] = 0;
-  pt_A = REAL(A);
-  pt_C = REAL(C);
-  for(i = 0; i < pt_CLDIM[0] * pt_CLDIM[1]; i++){
-    *pt_C = *pt_A;
-    pt_A++;
-    pt_C++;
-  }
-  
-  /* IPIV ( N + DESCA(6) ) */
-  ipiv = (int *) R_alloc(INTEGER(N)[0] + INTEGER(DESCA)[5], sizeof(int));
-  
-  /* LU decomposition */
-  INTEGER(INFO)[0] = 0;
-  F77_CALL(pdgetrf)(INTEGER(N), INTEGER(N), REAL(C), &IJ, &IJ, 
-    INTEGER(DESCA), ipiv, INTEGER(INFO));
-  
-  /* workspace query for inverse */
-  INTEGER(INFO)[0] = 0;
-  F77_CALL(pdgetri)(INTEGER(N), &tmp_A, &IJ, &IJ, INTEGER(DESCA),
-    &IJ, &tmp1, &query, &liwork, &query, INTEGER(INFO));
-  
-  /* allocate work arrays and invert A */
-  lwork = (int) tmp1;
-  work = (double *) R_alloc(lwork, sizeof(double));
-  
-  iwork = (int *) R_alloc(liwork, sizeof(int));
-  
-  INTEGER(INFO)[0] = 0;
-  F77_CALL(pdgetri)(INTEGER(N), REAL(C), &IJ, &IJ, INTEGER(DESCA),
-    ipiv, work, &lwork, iwork, &liwork, INTEGER(INFO));
-  
-  /* Return. */
-  UNPROTECT(4);
-        return(RET);
-} /* End of R_PDGETRI(). */
-
-
+/* LU factorization */
 SEXP R_PDGETRF(SEXP M, SEXP N, SEXP A, SEXP CLDIM, SEXP DESCA, SEXP LIPIV)
 {
   int i, *pt_CLDIM = INTEGER(CLDIM), *ipiv;
@@ -218,6 +234,7 @@ SEXP R_PDGETRF(SEXP M, SEXP N, SEXP A, SEXP CLDIM, SEXP DESCA, SEXP LIPIV)
     pt_C++;
   }
   
+  LIPIV = nonzero(LIPIV);
   ipiv = (int *) R_alloc(INTEGER(LIPIV), sizeof(int));
   
   INTEGER(INFO)[0] = 0;
@@ -231,6 +248,7 @@ SEXP R_PDGETRF(SEXP M, SEXP N, SEXP A, SEXP CLDIM, SEXP DESCA, SEXP LIPIV)
 
 
 
+/* Cholesky */
 SEXP R_PDPOTRF(SEXP N, SEXP A, SEXP CLDIM, SEXP DESCA, SEXP UPLO)
 {
   int i, *pt_CLDIM = INTEGER(CLDIM);
@@ -260,11 +278,99 @@ SEXP R_PDPOTRF(SEXP N, SEXP A, SEXP CLDIM, SEXP DESCA, SEXP UPLO)
     pt_C++;
   }
   
-  /* Call Fortran. */
+  // Call Fortran.
   F77_CALL(pdpotrf)(CHARPT(UPLO, 0), INTEGER(N),
     REAL(C), &IJ, &IJ, INTEGER(DESCA), INTEGER(INFO));
   
-  /* Return. */
+  // Return. 
   UNPROTECT(4);
         return(RET);
-} /* End of R_PDPOTRF(). */
+}
+
+
+
+// -------------------------------------------------------- 
+// Auxillary 
+// -------------------------------------------------------- 
+
+
+// Matrix norms
+SEXP R_PDLANGE(SEXP TYPE, SEXP M, SEXP N, SEXP A, SEXP DESCA)
+{
+  const int IJ = 1;
+  double *work;
+  
+  SEXP VAL;
+  PROTECT(VAL = allocVector(REALSXP, 1));
+  
+  F77_CALL(matnorm)(REAL(VAL), CHARPT(TYPE, 0), INTEGER(M),
+    INTEGER(N), REAL(A), &IJ, &IJ, INTEGER(DESCA));
+  
+  UNPROTECT(1);
+  return(VAL);
+}
+
+
+// Condition # estimator for general matrix
+SEXP R_PDGECON(SEXP TYPE, SEXP M, SEXP N, SEXP A, SEXP DESCA, SEXP ALDIM)
+{
+  const int IJ = 1;
+  double* cpA;
+  int i, info = 0;
+  int* pt_ALDIM = INTEGER(ALDIM);
+  
+  SEXP RET;
+  PROTECT(RET = allocVector(REALSXP, 2));
+  
+  // Copy A
+  i = pt_ALDIM[0] * pt_ALDIM[1];
+  cpA = R_alloc(i, sizeof(double));
+  memcpy(cpA, REAL(A), i * sizeof(double));
+  
+  // compute inverse of condition number
+  F77_CALL(condnum)(CHARPT(TYPE, 0), INTEGER(M), INTEGER(N), cpA, 
+    &IJ, &IJ, INTEGER(DESCA), REAL(RET), &info);
+  
+  REAL(RET)[1] = (double) info;
+  
+  UNPROTECT(1);
+  return(RET);
+}
+
+
+
+// Condition # estimator for triangular matrix
+SEXP R_PDTRCON(SEXP TYPE, SEXP UPLO, SEXP DIAG, SEXP N, SEXP A, SEXP DESCA)
+{
+  double* work;
+  double tmp;
+  int* iwork;
+  int i, lwork, liwork, info = 0;
+  // consts 
+  const int IJ = 1, in1 = -1;
+  // R objects
+  SEXP RET;
+  PROTECT(RET = allocVector(REALSXP, 2));
+  
+  // workspace query and allocate work vectors
+  F77_CALL(pdtrcon)(CHARPT(TYPE, 0), CHARPT(UPLO, 0), CHARPT(DIAG, 0),
+    INTEGER(N), REAL(A), &IJ, &IJ, INTEGER(DESCA), REAL(RET), 
+    &tmp, &in1, &liwork, &in1, &info);
+  
+  lwork = (int) tmp;
+  work = (double *) R_alloc(lwork, sizeof(double));
+  iwork = (int *) R_alloc(liwork, sizeof(int));
+  
+  // compute inverse of condition number
+  info = 0;
+  F77_CALL(pdtrcon)(CHARPT(TYPE, 0), CHARPT(UPLO, 0), CHARPT(DIAG, 0),
+    INTEGER(N), REAL(A), &IJ, &IJ, INTEGER(DESCA), REAL(RET), 
+    work, &lwork, iwork, &liwork, &info);
+  
+  REAL(RET)[1] = (double) info;
+  
+  UNPROTECT(1);
+  return(RET);
+}
+
+
