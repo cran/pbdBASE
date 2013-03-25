@@ -70,45 +70,13 @@ Oak Ridge, TN, USA \\
 %\\
 %\today
 }
-\title{A Quick Guide for the \pkg{pbdBASE} Package}
-%\\
-%\vspace{0.2cm} \large (Based on Version 0.1-2)}
+\title{Guide to the \pkg{pbdBASE} Package\\{\large Version 2.0}\\[.4cm]}
 
 %% for pretty printing and a nice hypersummary also set:
 \Plainauthor{Drew Schmidt, Wei-Chen Chen, George Ostrouchov, Pragneshkumar Patel} %% comma-separated
 \Plaintitle{Quick Guide for pbdBASE} %% without formatting
 \Shorttitle{Quick Guide for pbdBASE} %% a short title (if necessary)
 
-%% an abstract and keywords
-%\Abstract{
-%}
-%\Keywords{}
-%\Plainkeywords{} %% without formatting
-%% at least one keyword must be supplied
-
-%% publication information
-%% NOTE: Typically, this can be left commented and will be filled out by the technical editor
-%% \Volume{13}
-%% \Issue{9}
-%% \Month{September}
-%% \Year{2004}
-%% \Submitdate{2004-09-29}
-%% \Acceptdate{2004-09-29}
-
-%% The address of (at least) one author should be given
-%% in the following format:
-\Address{
-  Drew Schmidt\\
-  E-mail: \email{schmidt@math.utk.edu}\\
-  URL: \url{http://thirteen-01.stat.iastate.edu/snoweye/hpsc/}
-}
-%% It is also possible to add a telephone and fax number
-%% before the e-mail in the following format:
-%% Telephone: +43/1/31336-5053
-%% Fax: +43/1/31336-734
-
-%% for those who use Sweave please include the following line (with % symbols):
-%% need no \usepackage{Sweave.sty}
 
 %% end of declarations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -144,12 +112,7 @@ Oak Ridge, TN, USA \\
 
 \input{./pbdBASE-include/00-zzz-abstract}
 \input{./pbdBASE-include/01-introduction}
-\input{./pbdBASE-include/02-classesnmeths}
-\input{./pbdBASE-include/03-users}
-\input{./pbdBASE-include/04-examples}
-\input{./pbdBASE-include/05-advanced}
-\input{./pbdBASE-include/06-adveg}
-\input{./pbdBASE-include/07-developers}
+\input{./pbdBASE-include/02-use}
 
 \newpage
 \phantomsection

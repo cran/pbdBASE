@@ -67,7 +67,7 @@ base.rpdgesv <- function(n, nrhs, a, desca, b, descb)
 # PDGESVD:  SVD of x
 # ------------------------------------------------
 
-base.rpdgesvd <- function(jobu, jobvt, m, n, a, desca, descu, descvt)
+base.rpdgesvd <- function(jobu, jobvt, m, n, a, desca, descu, descvt, ..., inplace=FALSE)
 {
   size <- min(m, n)
   
@@ -102,13 +102,18 @@ base.rpdgesvd <- function(jobu, jobvt, m, n, a, desca, descu, descvt)
   if (!is.double(a))
     storage.mode(a) <- "double"
   
+  if (inplace)
+    inplace <- 'Y'
+  else
+    inplace <- 'N'
+  
   # Call ScaLAPACK
   out <- .Call("R_PDGESVD", 
             as.integer(m), as.integer(n), as.integer(size),
             a, as.integer(desca), as.integer(aldim),
             as.integer(uldim), as.integer(descu),
             as.integer(vtldim), as.integer(descvt),
-            as.character(jobu), as.character(jobvt),
+            as.character(jobu), as.character(jobvt), inplace,
             PACKAGE="pbdBASE")
   
   if (out$info!=0)
@@ -117,6 +122,43 @@ base.rpdgesvd <- function(jobu, jobvt, m, n, a, desca, descu, descvt)
   ret <- list( d=out$d, u=out$u, vt=out$vt )
   
   return( ret )
+}
+
+
+# ------------------------------------------------
+# PDSYEV:  Eigen
+# ------------------------------------------------
+
+base.rpdsyev <- function(jobz, uplo, n, a, desca, descz)
+{
+  aldim <- dim(a)
+  zldim <- base.numroc(descz[3:4], descz[5:6], ICTXT=descz[2])
+  
+  mxa <- pbdMPI::allreduce(max(aldim), op='max')
+  mxz <- pbdMPI::allreduce(max(zldim), op='max')
+  
+  if (all(aldim==1))
+    desca[9L] <- mxa
+  if (all(zldim==1))
+    descz[9L] <- mxz
+  
+  if (!is.double(a))
+    storage.mode(a) <- "double"
+  
+  # Call ScaLAPACK
+  out <- .Call("R_PDSYEV", 
+            as.character(jobz), as.character(uplo),
+            as.integer(n), a, as.integer(desca), as.integer(aldim),
+            as.integer(zldim), as.integer(descz),
+            PACKAGE="pbdBASE")
+  
+  if (out$info!=0)
+    comm.warning(paste("ScaLAPACK returned INFO=", out$info, "; returned solution is likely invalid", sep=""))
+  
+  out$values <- rev(out$values)
+  out$info <- NULL
+  
+  return( out )
 }
 
 

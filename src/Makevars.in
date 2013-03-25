@@ -14,7 +14,6 @@ PKG_LIBS = $(SLAP_LDFLAGS) $(FLIBS) $(SPMD_LDFLAGS)
 R_OBJS = \
   bprnt.o \
   lm.o \
-  mpi_blacs.o \
   base_mpi_blac.o \
   base_pblas_level3.o \
   base_scalapack.o \
@@ -49,4 +48,5 @@ $(SHLIB): $(OBJECTS)
 
 clean:
 	@rm -rf *.o *.d *.rc *.so *.dylib *.dll *.a *.lib \
-                Makedeps Makevars $(USER_CONF) $(SHLIB) $(OBJECTS)
+                Makedeps Makevars $(USER_CONF) $(SHLIB) $(OBJECTS) \
+                export_blacs/*.o secret/*.o
