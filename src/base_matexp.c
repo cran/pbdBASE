@@ -1,57 +1,34 @@
-#include "base_global.h"
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+// Copyright 2013-2015, Schmidt
+
+
+#include "pbdBASE.h"
 #include "base/expm/matexp.h"
 
 
-SEXP R_matpow_by_squaring(SEXP A, SEXP b)
+SEXP R_matexp(SEXP A, SEXP p)
 {
+  R_INIT;
   const int n = nrows(A);
-  double *cpA;
+  int i;
+  double *A_cp;
+  SEXP R;
   
-  SEXP P;
-  PROTECT(P = allocMatrix(REALSXP, n, n));
+  newRmat(R, n, n, "dbl");
   
-  // A is modified
-  cpA = malloc(n*n*sizeof(double));
-  memcpy(cpA, REAL(A), n*n*sizeof(double));
+  A_cp = (double *) R_alloc(n*n, sizeof(A_cp));
   
-  matpow_by_squaring(cpA, n, INT(b,0), REAL(P));
-  
-  free(cpA);
-  
-  UNPROTECT(1);
-  return(P);
-}
-
-
-
-SEXP R_matexp_pade(SEXP A)
-{
-  const int n = nrows(A);
-  SEXP N, D;
-  SEXP RET, RET_NAMES;
-  
-  // Allocate N and D
-  PROTECT(N = allocMatrix(REALSXP, n, n));
-  PROTECT(D = allocMatrix(REALSXP, n, n));
-  
-  // Compute N and D
-  matexp_pade(n, REAL(A), REAL(N), REAL(D));
-  
-  // Wrangle the return
-  PROTECT(RET = allocVector(VECSXP, 2));
-  PROTECT(RET_NAMES = allocVector(STRSXP, 2));
-  
-  SET_VECTOR_ELT(RET, 0, N);
-  SET_VECTOR_ELT(RET, 1, D);
-  
-  SET_STRING_ELT(RET_NAMES, 0, mkChar("N")); 
-  SET_STRING_ELT(RET_NAMES, 1, mkChar("D")); 
-  
-  setAttrib(RET, R_NamesSymbol, RET_NAMES);
+  for (i=0; i<n*n; i++)
+    A_cp[i] = REAL(A)[i];
   
   
-  UNPROTECT(4);
-  return(RET);
+  matexp(n, INT(p), A_cp, REAL(R));
+  
+  R_END;
+  return R;
 }
 
 

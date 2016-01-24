@@ -1,47 +1,54 @@
-#include <R.h>
-#include <Rinternals.h>
-#include "base_global.h"
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+// Copyright 2013, Schmidt
+
+#include "pbdBASE.h"
+
 
 SEXP R_PDCROSSPROD(SEXP UPLO, SEXP TRANS, SEXP A, SEXP DESCA, SEXP CLDIM, SEXP DESCC)
 {
+  R_INIT;
+  double alpha = 1.0;
+  int IJ = 1;
+  
   SEXP C;
-  PROTECT(C = allocMatrix(REALSXP, INTEGER(CLDIM)[0], INTEGER(CLDIM)[1]));
+  newRmat(C, INT(CLDIM, 0), INT(CLDIM, 1), "dbl");
   
-  const double alpha = 1.0;
-  const int IJ = 1;
+  pdcrossprod_(STR(UPLO, 0), STR(TRANS, 0), &alpha, 
+    DBLP(A), &IJ, &IJ, INTP(DESCA), 
+    DBLP(C), &IJ, &IJ, INTP(DESCC));
   
-  pdcrossprod_(CHARPT(UPLO, 0), CHARPT(TRANS, 0), &alpha, 
-    REAL(A), &IJ, &IJ, INTEGER(DESCA), 
-    REAL(C), &IJ, &IJ, INTEGER(DESCC));
-  
-  UNPROTECT(1);
-  return(C);
+  R_END;
+  return C;
 }
 
 
 SEXP R_PDCHTRI(SEXP UPLO, SEXP A, SEXP ALDIM, SEXP DESCA, SEXP CLDIM, SEXP DESCC)
 {
-  const int IJ = 1;
+  int IJ = 1;
   const int m = INTEGER(ALDIM)[0], n = INTEGER(ALDIM)[1];
-  double *CPA;
+  double *A_cp;
+  int info = 0;
   
-  SEXP C, INFO;
+  SEXP C;
   PROTECT(C = allocMatrix(REALSXP, INTEGER(CLDIM)[0], INTEGER(CLDIM)[1]));
-  PROTECT(INFO = allocVector(INTSXP, 1));
   
-  CPA = R_alloc(m*n, sizeof(double));
-  memcpy(CPA, REAL(A), m*n*sizeof(double));
+  A_cp = (double *) R_alloc(m*n, sizeof(double));
+  memcpy(A_cp, REAL(A), m*n*sizeof(double));
   
-  INTEGER(INFO)[0] = 0;
-  
-  pdchtri_(CHARPT(UPLO, 0), CPA, &IJ, &IJ, INTEGER(DESCA), 
+  pdchtri_(CHARPT(UPLO, 0), A_cp, &IJ, &IJ, INTEGER(DESCA), 
     REAL(C), &IJ, &IJ,
-    INTEGER(DESCC), INTEGER(INFO));
+    INTEGER(DESCC), &info);
   
-  if (INTEGER(INFO)[0] != 0)
-    Rprintf("INFO = %d\n", INTEGER(INFO)[0]);
+  if (info != 0)
+  {
+    //FIXME replace with appropriate COMM_WARN
+    Rprintf("INFO = %d\n", info);
+  }
   
-  UNPROTECT(2);
+  UNPROTECT(1);
   return(C);
 }
 

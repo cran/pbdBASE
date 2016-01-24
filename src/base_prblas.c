@@ -1,12 +1,16 @@
-#include <R.h>
-#include <Rinternals.h>
-#include "base_global.h"
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+// Copyright 2013, Schmidt
+
+#include "pbdBASE.h"
 
 
 SEXP R_RL2BLAS(SEXP X, SEXP LDIM, SEXP DESCX, SEXP VEC, SEXP LVEC, SEXP FUN)
 {
   const int m = INTEGER(LDIM)[0], n = INTEGER(LDIM)[1];
-  const int IJ = 1;
+  int IJ = 1;
   
   SEXP CPX;
   PROTECT(CPX = allocMatrix(REALSXP, m, n));
@@ -23,7 +27,7 @@ SEXP R_RL2BLAS(SEXP X, SEXP LDIM, SEXP DESCX, SEXP VEC, SEXP LVEC, SEXP FUN)
 SEXP R_RL2INSERT(SEXP X, SEXP LDIM, SEXP DESCX, SEXP VEC, SEXP LVEC, SEXP INDI, SEXP LINDI, SEXP INDJ, SEXP LINDJ)
 {
   const int m = INTEGER(LDIM)[0], n = INTEGER(LDIM)[1];
-  const int IJ = 1;
+  int IJ = 1;
   
   SEXP CPX;
   PROTECT(CPX = allocMatrix(REALSXP, m, n));

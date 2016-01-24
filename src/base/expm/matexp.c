@@ -1,95 +1,151 @@
-  /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Copyright (C) 2013-2015 Drew Schmidt. 
+ *               2015 Wei-Chen Chen
+ * All rights reserved.
 
-// Copyright 2013, Schmidt
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+
+/* Matrix exponentiation algorithm from:
+   "New Scaling and Squaring Algorithm for the Matrix Exponential", by
+   Awad H. Al-Mohy and Nicholas J. Higham, August 2009
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 
 #include "matexp.h"
 
-void dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc);
-void dlacpy_(char *uplo, int *m, int *n, double *a, int *lda, double *b, int *ldb);
+
+// -------------------------------------------------------- 
+// Utilities
+// -------------------------------------------------------- 
 
 // C = A * B for square matrices
-static inline void matprod(const unsigned int n, double *a, double *b, double *c)
+static void matprod(int n, double *a, double *b, double *c)
 {
   char trans = 'N';
-  const double one = 1.0, zero = 0.0;
-
+  double one = 1.0, zero = 0.0;
+  
   dgemm_(&trans, &trans, &n, &n, &n, &one, a, &n, b, &n, &zero, c, &n);
 }
 
-// Copy A ONTO B, i.e. B = A
-static inline void matcopy(const unsigned int n, double *A, double *B)
-{
-  const char uplo = 'A';
 
+
+// Copy A ONTO B, i.e. B = A
+static inline void matcopy(int n, double *A, double *B)
+{
+  char uplo = 'A';
+  
   dlacpy_(&uplo, &n, &n, A, &n, B, &n);
 }
 
-// Zero matrix
-static inline void matzero(const unsigned int n, double *a)
-{
-  int i;
 
-  #pragma omp for simd
-  {
-    for (i=0; i<n*n; i++)
-      a[i] = 0.0;
-  }
-}
 
 // Identity matrix
 static inline void mateye(const unsigned int n, double *a)
 {
-  int i, j;
-
-  #pragma omp for simd
+  int i;
+  
+  for (i=0; i<n*n; i++)
+    a[i] = 0.0;
+  
+  i = 0;
+  while (i < n*n)
   {
-    matzero(n, a);
-
-    // Fill diagonal with 1
-    i = 0;
-    while (i < n*n)
-    {
-      a[i] = 1.0;
-
-      i += n+1;
-    }
+    a[i] = 1.0;
+    i += n+1;
   }
 }
 
 
 
-
-// Exponentiation by squaring --- A is modified
-// P = A^b
-void matpow_by_squaring(double *A, int n, int b, double *P)
+// 1-norm for a square matrix
+static double matnorm_1(const double *x, const int n)
 {
   int i, j;
-  double tmp, tmpj;
+  double norm = 0;
+  double tmp;
+  
+  // max(colSums(abs(x))) 
+  for (j=0; j<n; j++)
+  {
+    tmp = 0;
+    
+    for (i=0; i<n; i++)
+      tmp += fabs(x[i + j*n]);
+    
+    if (tmp > norm)
+      norm = tmp;
+  }
+  
+  return norm;
+}
+
+
+
+#define NTHETA 5
+
+static int matexp_scale_factor(const double *x, const int n)
+{
+  int i;
+  const double theta[] = {1.5e-2, 2.5e-1, 9.5e-1, 2.1e0, 5.4e0};
+  
+  const double x_1 = matnorm_1(x, n);
+  
+  for (i=0; i<NTHETA; i++)
+  {
+    if (x_1 <= theta[i])
+      return 0;
+  }
+  
+  i = (int) ceil(log2(x_1/theta[4]));
+  
+  return 1 << i;
+}
+
+
+
+// Matrix power by squaring: P = A^b (A is garbage on exit)
+static void matpow_by_squaring(double *A, int n, int b, double *P)
+{
   double *TMP;
-
-
+  
   mateye(n, P);
-
+  
   // Trivial cases
   if (b == 0)
     return;
-
+  
   if (b == 1)
   {
     matcopy(n, A, P);
     return;
   }
-
-
+  
+  
   // General case
   TMP = malloc(n*n*sizeof(double));
-
+  
   while (b)
   {
     if (b&1)
@@ -97,117 +153,150 @@ void matpow_by_squaring(double *A, int n, int b, double *P)
       matprod(n, P, A, TMP);
       matcopy(n, TMP, P);
     }
-
-    b >>=1;
+    
+    b >>= 1;
     matprod(n, A, A, TMP);
     matcopy(n, TMP, A);
   }
-
+  
   free(TMP);
 }
 
 
 
-
+// -------------------------------------------------------- 
+// Matrix Exponentiation via Pade' Approximations
+// -------------------------------------------------------- 
 
 /* r_m(x) = p_m(x) / q_m(x), where
    p_m(x) = sum_{j=0}^m (2m-j)!m!/(2m)!/(m-j)!/j! * x^j
-
+  
    and q_m(x) = p_m(-x)
 */
 
-
-// Matrix exponentiation using Pade' approximations
-// p==q==13
-
-void matexp_pade_fillmats(const unsigned int m, const unsigned int n, const unsigned int i, double *N, double *D, double *B, double *C)
+// Workhorse for matexp_pade
+void matexp_pade_fillmats(const int m, const int n, const int i, double *restrict N, double *restrict D, double *restrict B, const double *restrict C)
 {
   int j;
   const double tmp = matexp_pade_coefs[i];
   double tmpj;
-
-
-  if (SGNEXP(-1, i) == 1)
-  {
+  const int sgn = SGNEXP(-1, i);
+  
+    /* Performs the following actions:
+        B = C
+        N = pade_coef[i] * C
+        D = (-1)^j * pade_coef[i] * C
+    */
     for (j=0; j<m*n; j++)
     {
-      // B = C
       tmpj = C[j];
       B[j] = tmpj;
-
+      
       tmpj *= tmp;
-      // N = pade_coef[i] * C
+      
       N[j] += tmpj;
-      // D = (-1)^j * pade_coef[i] * C
-      D[j] += tmpj;
+      D[j] += sgn*tmpj;
     }
-  }
-  else
-  {
-    for (j=0; j<m*n; j++)
-    {
-      // B = C
-      tmpj = C[j];
-      B[j] = tmpj;
-
-      tmpj *= tmp;
-      // N = pade_coef[i] * C
-      N[j] += tmpj;
-      // D = (-1)^j * pade_coef[i] * C
-      D[j] -= tmpj;
-    }
-  }
 }
 
-void matexp_pade(const unsigned int n, double *A, double *N, double *D)
-{
-  int i;
-  double *B, *C;
 
+
+// Exponentiation via Pade' expansion
+static void matexp_pade(int n, const int p, double *A, double *N)
+{
+  int i, info = 0;
+  int *ipiv;
+  double *B, *C, *D;
+  
   // Power of A
   B = calloc(n*n, sizeof(double));
+  assert(B != NULL);
+  
   // Temporary storage for matrix multiplication
   C = malloc(n*n * sizeof(double));
-
-  assert(B != NULL);
   assert(C != NULL);
-
+  
+  D = malloc(n*n * sizeof(double));
+  assert(D != NULL);
+  
   matcopy(n, A, C);
-
+  
   for (i=0; i<n*n; i++)
   {
     N[i] = 0.0;
     D[i] = 0.0;
   }
-
-  // Initialize N and D
-  #pragma omp for simd
+  
+  i = 0;
+  while (i < n*n)
   {
-    // Fill diagonal with 1
-    i = 0;
-    while (i < n*n)
-    {
-      N[i] = 1.0;
-      D[i] = 1.0;
-
-      i += n+1;
-    }
+    N[i] = 1.0;
+    D[i] = 1.0;
+    
+    i += n+1;
   }
-
-
+  
+  
   // Fill N and D
-  for (i=1; i<=13; i++)
+  for (i=1; i<=p; i++)
   {
     // C = A*B
     if (i > 1)
       matprod(n, A, B, C);
-
+    
     // Update matrices
     matexp_pade_fillmats(n, n, i, N, D, B, C);
   }
-
+  
+  // R <- inverse(D) %*% N
+  ipiv = calloc(n, sizeof(*ipiv));
+  assert(ipiv != NULL);
+  
+  dgesv_(&n, &n, D, &n, ipiv, N, &n, &info);
+  
+  
   free(B);
   free(C);
+  free(D);
+  free(ipiv);
 }
 
+
+
+/*
+  n       Number of rows/cols of (square) matrix x.
+  
+  p       Order of the Pade' approximation. 0 < p <= 13.
+  
+  t       Scaling factor for x (t=1 canonical).
+  
+  x       Input (square) matrix.  On function exit, the values
+          in x are garbage.
+  
+  ret     On exit, ret = expm(x).
+*/
+
+void matexp(int n, const int p, double *x, double *ret)
+{
+  int m;
+  int nn = n*n;
+  int one = 1;
+  double tmp;
+  
+  m = matexp_scale_factor(x, n);
+  
+  if (m == 0)
+    matexp_pade(n, p, x, ret);
+  else
+  {
+    tmp = 1. / ((double) m);
+    dscal_(&nn, &tmp, x, &one);
+  
+    matexp_pade(n, p, x, ret);
+  
+    matcopy(n, ret, x);
+  
+    matpow_by_squaring(x, n, m, ret);
+  }
+}
 
