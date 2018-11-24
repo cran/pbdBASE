@@ -1,6 +1,6 @@
 e879eaad64aab8e1f8e63e298f5cea28 *COPYING
 548564073a811127f8376f666e28c7c8 *ChangeLog
-4e2bfc41c3f8ebaa095c87c0d2a9c01d *DESCRIPTION
+b51ea2b89ae1dfb13261ef0b2fca5310 *DESCRIPTION
 69d78b8b63b2e42c3165d1733ac68a86 *INSTALL
 f2ce558be583a82fef632cbf28f84375 *NAMESPACE
 aad4f303c393e4efc14fc62b90f31998 *R/000_globalVariables.r
@@ -104,8 +104,8 @@ d94974a8eaa64708034fe93feecf0678 *man/l2g_coord.Rd
 15e825b2f0c517b64d4a483407714131 *man/numroc2.Rd
 a36edf624bd019a301a6ebdddeca8563 *man/pbdBASE-package.Rd
 91d379763ea22dc91569bb18ba59f9ef *man/pcoords.Rd
-fa2d6509f1e8e220dd6931a7dfb1d36c *src/Makevars.in
-106725abf035136744e6d49d69499b41 *src/Makevars.win
+92f4e3fcac1bc1faf7cf398fc13950c0 *src/Makevars.in
+4278b0b6ceb7d829a1ba5541f8f2cae1 *src/Makevars.win
 e3875fd679a4b75ea4e6e401163a0ea9 *src/base/bprnt.f
 24c9178aab765dcdbd8cf57bdd5b36e8 *src/base/bprnt_c.c
 72ca0d6082be04039ef014295c7bb66f *src/base/expm/matexp.c

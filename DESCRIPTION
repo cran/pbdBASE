@@ -2,7 +2,7 @@ Package: pbdBASE
 Type: Package
 Title: Programming with Big Data -- Base Wrappers for Distributed
         Matrices
-Version: 0.4-5.1
+Version: 0.4-5.2
 Description: An interface to and extensions for the 'PBLAS' and
     'ScaLAPACK' numerical libraries.  This enables R to utilize
     distributed linear algebra for codes written in the 'SPMD' fashion.
@@ -30,14 +30,14 @@ Authors@R: c(person("Drew", "Schmidt", role=c("aut", "cre"), email="schmidt@math
     person("Ewan", "Higgs", role="ctb"))
 Maintainer: ORPHANED
 RoxygenNote: 5.0.1
-Packaged: 2018-02-05 10:38:23 UTC; ripley
+Packaged: 2018-11-24 18:49:03 UTC; ripley
 Author: Drew Schmidt [aut, cre],
   Wei-Chen Chen [aut],
   George Ostrouchov [aut],
   Pragneshkumar Patel [aut],
   Ewan Higgs [ctb]
 Repository: CRAN
-Date/Publication: 2018-02-05 10:46:53 UTC
+Date/Publication: 2018-11-24 19:03:44 UTC
 X-CRAN-Original-Maintainer: Drew Schmidt <schmidt@math.utk.edu>
 X-CRAN-Comment: Orphaned and corrected on 2018-02-05 as C++ programming
         error reported by clang was not corrected despite reminders.
