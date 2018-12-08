@@ -24,7 +24,7 @@
 #define BLACS_APTS_R_NAME	".__BLACS_APTS__"
 
 /* For debugging. */
-#define BLACS_APTS_DEBUG	0
+#define BLACS_APTS_DEBUG	1
 
 /* Declared in "BI_GlobalVars.c", or similar main c functions. */
 extern int BI_MaxNCtxt, BI_MaxNSysCtxt, BI_Iam, BI_Np;
@@ -39,7 +39,7 @@ typedef struct _blacs_array_pointers	blacs_array_pointers;
 struct _blacs_array_pointers{
 	int *BI_MaxNCtxt, *BI_MaxNSysCtxt, *BI_Iam, *BI_Np;
 	BLACBUFF *BI_ReadyB, *BI_ActiveQ, *BI_AuxBuff;
-	BLACSCONTEXT *BI_MyContxts;
+	BLACSCONTEXT **BI_MyContxts;
 	MPI_Comm *BI_SysContxts;
 	int *BI_COMM_WORLD;
 	MPI_Status *BI_Stats;

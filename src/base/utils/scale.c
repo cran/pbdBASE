@@ -20,6 +20,8 @@
 #include "utils.h"
 
 
+#define UNUSED(x) (void)(x)
+
 #define ROWS 1
 #define COLS 2
 
@@ -56,7 +58,7 @@ static inline void l2gpair(const int i, const int j, int* restrict gi, int* rest
         for (int i=1; i<=m; i++) \
         { \
           l2gpair(i, j, &gi, &gj, descx, blacs); \
-          pos = ind(gi + k*(gj-1), lvec); \
+          pos = ind(gi + k*(gj-1), lvec) -1; \
           x[i-1 + m*(j-1)] = x[i-1 + m*(j-1)] OP vec[pos]; \
         } \
       } \
@@ -69,8 +71,8 @@ static inline void l2gpair(const int i, const int j, int* restrict gi, int* rest
         for (int i=1; i<=m; i++) \
         { \
           l2gpair(i, j, &gi, &gj, descx, blacs); \
-          pos = ind(gj + k*(gi-1), lvec); \
-          x[i + m*j] = x[i + m*j] OP vec[pos]; \
+          pos = ind(gj + k*(gi-1), lvec) - 1; \
+          x[i-1 + m*(j-1)] = x[i-1 + m*(j-1)] OP vec[pos]; \
         } \
       } \
     } \
@@ -80,6 +82,9 @@ static inline void l2gpair(const int i, const int j, int* restrict gi, int* rest
 
 void pdsweep(double *restrict x, const int ix, const int jx, int *restrict descx, double *restrict vec, const int lvec, const int margin, const char fun)
 {
+  UNUSED(ix);
+  UNUSED(jx);
+  
   int k, m, n, pos, gi, gj;
   int ldm[2], blacs[5];
   

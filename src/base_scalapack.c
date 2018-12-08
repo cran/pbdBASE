@@ -58,8 +58,8 @@ SEXP R_PDGESV(SEXP N, SEXP NRHS, SEXP MXLDIMS, SEXP A, SEXP DESCA, SEXP B, SEXP 
   
   
   // Manage return
-  RET_NAMES = make_list_names(2, "info", "B");
-  RET = make_list(RET_NAMES, 2, INFO, B_OUT);
+  make_list_names(RET_NAMES, 2, "info", "B");
+  make_list(RET, RET_NAMES, 2, INFO, B_OUT);
   
   R_END;
   return RET;
@@ -83,8 +83,8 @@ SEXP R_PDGETRI(SEXP A, SEXP DESCA)
   
   
   // Manage return
-  RET_NAMES = make_list_names(2, "info", "A");
-  RET = make_list(RET_NAMES, 2, INFO, INV);
+  make_list_names(RET_NAMES, 2, "info", "A");
+  make_list(RET, RET_NAMES, 2, INFO, INV);
   
   R_END;
   return RET;
@@ -95,59 +95,6 @@ SEXP R_PDGETRI(SEXP A, SEXP DESCA)
 // -------------------------------------------------------- 
 // Factorizations 
 // -------------------------------------------------------- 
-
-
-/* SVD */
-SEXP R_PDGESVD(SEXP M, SEXP N, SEXP ASIZE, SEXP A, SEXP DESCA, 
-    SEXP ULDIM, SEXP DESCU, SEXP VTLDIM, SEXP DESCVT, SEXP JOBU, SEXP JOBVT, 
-    SEXP INPLACE)
-{
-  R_INIT;
-  double *A_OUT;
-  int IJ = 1, temp_lwork = -1;
-  double temp_A = 0, temp_work = 0, *WORK;
-  SEXP RET, RET_NAMES, INFO, D, U, VT;
-  
-  newRvec(INFO, 1, "int");
-  newRvec(D, INT(ASIZE, 0), "dbl");
-  newRmat(U, INT(ULDIM, 0), INT(ULDIM, 1), "dbl");
-  newRmat(VT, INT(VTLDIM, 0), INT(VTLDIM, 1), "dbl");
-  
-  
-  // Query size of workspace
-  INT(INFO, 0) = 0;
-  
-  pdgesvd_(STR(JOBU, 0), STR(JOBVT, 0),
-    INTP(M), INTP(N),
-    &temp_A, &IJ, &IJ, INTP(DESCA),
-    &temp_A, &temp_A, &IJ, &IJ, INTP(DESCU),
-    &temp_A, &IJ, &IJ, INTP(DESCVT),
-    &temp_work, &temp_lwork, INTP(INFO));
-      
-  // Allocate work vector and calculate svd
-  temp_lwork = (int) temp_work;
-  temp_lwork = nonzero(temp_lwork);
-  
-  WORK = (double *) R_alloc(temp_lwork, sizeof(double));
-  
-  A_OUT = (double *) R_alloc(nrows(A)*ncols(A), sizeof(double));
-  memcpy(A_OUT, REAL(A), nrows(A)*ncols(A)*sizeof(double));
-  
-  pdgesvd_(STR(JOBU, 0), STR(JOBVT, 0),
-    INTP(M), INTP(N),
-    A_OUT, &IJ, &IJ, INTP(DESCA),
-    REAL(D), REAL(U), &IJ, &IJ, INTP(DESCU),
-    REAL(VT), &IJ, &IJ, INTP(DESCVT),
-    WORK, &temp_lwork, INTP(INFO));
-  
-  // Manage return
-  RET_NAMES = make_list_names(4, "info", "d", "u", "vt");
-  RET = make_list(RET_NAMES, 4, INFO, D, U, VT);
-  
-  R_END;
-  return RET;
-} 
-
 
 /* Symmetric Eigen */
 SEXP R_PDSYEVR(SEXP JOBZ, SEXP UPLO, SEXP N, SEXP A, SEXP DESCA, SEXP DESCZ)
@@ -206,8 +153,8 @@ SEXP R_PDSYEVR(SEXP JOBZ, SEXP UPLO, SEXP N, SEXP A, SEXP DESCA, SEXP DESCZ)
   
   
   // Manage return
-  RET_NAMES = make_list_names(3, "values", "vectors", "info");
-  RET = make_list(RET_NAMES, 3, W, Z, INFO);
+  make_list_names(RET_NAMES, 3, "values", "vectors", "info");
+  make_list(RET, RET_NAMES, 3, W, Z, INFO);
   
   R_END;
   return RET;
@@ -241,8 +188,8 @@ SEXP R_PDGETRF(SEXP M, SEXP N, SEXP A, SEXP CLDIM, SEXP DESCA, SEXP LIPIV)
   pdgetrf_(INTP(M), INTP(N), DBLP(C), &IJ, &IJ, INTP(DESCA), ipiv, INTP(INFO));
   
   // Manage return
-  RET_NAMES = make_list_names(2, "info", "A");
-  RET = make_list(RET_NAMES, 2, INFO, C);
+  make_list_names(RET_NAMES, 2, "info", "A");
+  make_list(RET, RET_NAMES, 2, INFO, C);
   
   R_END;
   return RET;
@@ -268,8 +215,8 @@ SEXP R_PDPOTRF(SEXP N, SEXP A, SEXP DESCA, SEXP UPLO)
   pdpotrf_(STR(UPLO, 0), INTP(N), DBLP(C), &IJ, &IJ, INTP(DESCA), INTP(INFO));
   
   // Manage return
-  RET_NAMES = make_list_names(2, "info", "A");
-  RET = make_list(RET_NAMES, 2, INFO, C);
+  make_list_names(RET_NAMES, 2, "info", "A");
+  make_list(RET, RET_NAMES, 2, INFO, C);
   
   R_END;
   return(RET);
@@ -368,8 +315,8 @@ SEXP R_PDSYEVX(SEXP JOBZ, SEXP RANGE, SEXP N, SEXP A, SEXP DESCA, SEXP VL, SEXP 
   // Manage the return
   if (CHARPT(JOBZ, 0)[0] == 'N') // Only eigenvalues are computed
   {
-    RET_NAMES = make_list_names(1, "values");
-    RET = make_list(RET_NAMES, 1, W);
+    make_list_names(RET_NAMES, 1, "values");
+    make_list(RET, RET_NAMES, 1, W);
   }
   else // eigenvalues + eigenvectors
   {
@@ -381,8 +328,8 @@ SEXP R_PDSYEVX(SEXP JOBZ, SEXP RANGE, SEXP N, SEXP A, SEXP DESCA, SEXP VL, SEXP 
     newRvec(M, 1, "int");
     INT(M, 0) = m;
     
-    RET_NAMES = make_list_names(3, "values", "vectors", "m");
-    RET = make_list(RET_NAMES, 3, W, Z, M);
+    make_list_names(RET_NAMES, 3, "values", "vectors", "m");
+    make_list(RET, RET_NAMES, 3, W, Z, M);
   }
   
   
@@ -410,6 +357,7 @@ SEXP R_PDLANGE(SEXP TYPE, SEXP M, SEXP N, SEXP A, SEXP DESCA)
   R_END;
   return VAL;
 }
+
 
 
 // Condition # estimator for general matrix

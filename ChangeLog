@@ -1,3 +1,19 @@
+Release 0.5-0:
+  * Generalize pdgemm() wrapper.
+  * Update to RNACI v0.5.0.
+  * Added base.pdgelqf().
+  * Added base.rpdorglq().
+  * Exported native routines.
+  * Fixed base.matexp() bug.
+  * Fixed some compiler warnings.
+  * Cleaned up some internal issues.
+  * Initial support for BLACS contexts with multiple MPI communicators.
+  * Fixed Windows build issue (Jeroen Ooms).
+  * Fix OMP flags issue.
+
+Release 0.4-6:
+  * Fix indexing problem in pdsweep()
+
 Release 0.4-5:
   * Rewrote sweeper.
   * Remove -w and fix compiler warnings.
