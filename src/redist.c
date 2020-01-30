@@ -4,7 +4,12 @@
 
 // Copyright 2016, Schmidt
 
+
+#include "blacs.h"
+
+// R.h and Rinternals.h needs to be included after Rconfig.h
 #include "pbdBASE.h"
+#include <RNACI.h>
 
 
 void dmat_ldimget(int *desc, int* nrows, int* ncols);

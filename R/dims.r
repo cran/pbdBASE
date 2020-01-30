@@ -2,7 +2,7 @@
 #'
 #' Creates ScaLAPACK descriptor array.
 #'
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #'
 #' @param dim
 #' Global dim.
@@ -12,7 +12,26 @@
 #' Local dim.
 #' @param ICTXT
 #' BLACS context.
+#' @return A descriptor array.
 #'
+#' @examples
+#' spmd.code <- "
+#'   suppressMessages(library(pbdMPI))
+#'   suppressMessages(library(pbdBASE))
+#'   init.grid()
+#'
+#'   ### Set desc.
+#'   dim <- c(6L, 5L)
+#'   bldim <- c(3L, 3L)
+#'   ldim <- base.numroc(dim = dim, bldim = bldim)
+#'   descx <- base.descinit(dim = dim, bldim = bldim, ldim = ldim)
+#'   comm.print(descx)
+#'
+#'   finalize()
+#' "
+#' pbdMPI::execmpi(spmd.code = spmd.code, nranks = 2L)
+#'
+#' @useDynLib pbdBASE R_descinit
 #' @export
 base.descinit <- function(dim, bldim, ldim, ICTXT=0)
 {
@@ -24,7 +43,7 @@ base.descinit <- function(dim, bldim, ldim, ICTXT=0)
 ###  desc[6L] <- max(1, bldim[2L])     # NB_A
 ###  desc[7L] <- 0L                    # RSRC_A
 ###  desc[8L] <- 0L                    # CSRC_A
-####  desc[9L] <- max(1L, ldim[1L])     # LLD_A
+###  desc[9L] <- max(1L, ldim[1L])     # LLD_A
 ###  desc[9L] <- max(ldim[1L], max(1L, NUMROC(dim[1L], bldim[1L], grid$MYROW, grid$NPROW)))
   grid <- base.blacs(ICTXT=ICTXT)
   lld <- NUMROC(dim[1L], bldim[1L], grid$MYROW, grid$NPROW)
@@ -36,7 +55,7 @@ base.descinit <- function(dim, bldim, ldim, ICTXT=0)
   if (any(base.blacs(ICTXT=ICTXT) == -1))
     desc[2L] <- -1L
   
-  return(desc)
+  desc
 }
 
 
@@ -45,7 +64,7 @@ base.descinit <- function(dim, bldim, ldim, ICTXT=0)
 #'
 #' NUMber of Rows Or Columns
 #'
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #'
 #' @param dim
 #' Global dim.
@@ -55,11 +74,27 @@ base.descinit <- function(dim, bldim, ldim, ICTXT=0)
 #' BLACS context.
 #' @param fixme
 #' Should ldims be "rounded" to 0 or not.
+#' @return A vector of local dim.
+#'
+#' @examples
+#' spmd.code <- "
+#'   suppressMessages(library(pbdMPI))
+#'   suppressMessages(library(pbdBASE))
+#'   init.grid()
+#'
+#'   ### Set desc.
+#'   dim <- c(6L, 5L)
+#'   bldim <- c(3L, 3L)
+#'   ldim <- base.numroc(dim = dim, bldim = bldim)
+#'   comm.print(ldim)
+#'
+#'   finalize()
+#' "
+#' pbdMPI::execmpi(spmd.code = spmd.code, nranks = 2L)
 #'
 #' @export
 base.numroc <- function(dim, bldim, ICTXT=0, fixme=TRUE)
 {
-  
   blacs_ <- base.blacs(ICTXT=ICTXT)
   
   MYP <- c(blacs_$MYROW, blacs_$MYCOL)
@@ -89,24 +124,25 @@ base.numroc <- function(dim, bldim, ICTXT=0, fixme=TRUE)
     if (any(ldim<1)) ldim <- c(1L, 1L) # FIXME
   }
 
-  return(ldim)
+  ldim
 }
 
 numroc <- base.numroc
 
 
+
+#' @useDynLib pbdBASE R_NUMROC
 NUMROC <- function(N, NB, IPROC, NPROCS)
 {
-   ret <- .Call(R_NUMROC, as.integer(N), as.integer(NB), as.integer(IPROC), as.integer(NPROCS))
-  
-  return( ret )
+  ret <- .Call(R_NUMROC, as.integer(N), as.integer(NB), as.integer(IPROC), as.integer(NPROCS))
+  ret
 }
 
 
 
 #' Determining Local Ownership of a Distributed Matrix
 #'
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #'
 #' A simple wrapper of numroc. The return is the answer to
 #' the question 'do I own any of the global matrix?'.  Passing a distributed
@@ -125,20 +161,21 @@ NUMROC <- function(N, NB, IPROC, NPROCS)
 #' blocking dimension
 #' @param ICTXT
 #' BLACS context
+#' @return TRUE or FALSE
 #'
 #' @keywords BLACS Distributing Data
 #'
 #' @examples
-#' spmd.code = "
+#' spmd.code <- "
+#'   suppressMessages(library(pbdMPI))
 #'   suppressMessages(library(pbdBASE))
 #'   init.grid()
 #'
-#'   iown <- ownany(dim=c(4, 4), bldim=c(2, 2), CTXT=0)
-#'   comm.print(iown, all.rank=T)
+#'   iown <- base.ownany(dim=c(4, 4), bldim=c(4, 4), ICTXT=0)
+#'   comm.print(iown, all.rank = TRUE)
 #'
 #'   finalize()
 #' "
-#'
 #' pbdMPI::execmpi(spmd.code = spmd.code, nranks = 2L)
 #'
 #' @export
@@ -162,45 +199,15 @@ base.ownany <- function(dim, bldim, ICTXT=0)
 
 
 
-#' rpdlaprnt
-#'
-#' Matrix printer.
-#'
-#' For advanced users only.
-#'
-#' @param m,n
-#' Number rows/cols.
-#' @param a
-#' Matrix.
-#' @param desca
-#' ScaLAPACK descriptor array.
-#'
-#' @export
-base.rpdlaprnt <- function(m, n, a, desca)
-{
-  if (!is.double(a))
-    storage.mode(a) <- "double"
-  
-  .Call(R_PDLAPRNT,
-        as.integer(m), as.integer(n),
-        a, as.integer(desca),
-        as.character(deparse(substitute(a))),
-        6L #WCC: 0 for stderr, 6 for stdout. Both are disabled.
-        )
-  
-  return( invisible(0) )
-}
-
-
-
 #' maxdim
 #'
 #' Compute maximum dimension across all nodes
 #'
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #'
 #' @param dim
 #' Global dim.
+#' @return Maximum dimension.
 #'
 #' @export
 base.maxdim <- function(dim)
@@ -209,7 +216,7 @@ base.maxdim <- function(dim)
   mdim[1] <- pbdMPI::allreduce(dim[1], op='max')
   mdim[2] <- pbdMPI::allreduce(dim[2], op='max')
   
-  return( mdim )
+  mdim
 }
 
 
@@ -218,12 +225,13 @@ base.maxdim <- function(dim)
 #'
 #' Compute dimensions on process MYROW=MYCOL=0
 #'
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #'
 #' @param dim
 #' Global dim.
 #' @param ICTXT
 #' BLACS context.
+#' @return Dimension on MYROW=MYCOL=0
 #'
 #' @export
 base.dim0 <- function(dim, ICTXT=0)
@@ -243,9 +251,9 @@ base.dim0 <- function(dim, ICTXT=0)
 #  pbdMPI::barrier()
   
   if (MYROW==0 && MYCOL==0)
-    return( dim )
+    return(dim)
   else
-    return( c(mx01, mx02) )
+    return(c(mx01, mx02))
 }
 
 
@@ -254,7 +262,7 @@ base.dim0 <- function(dim, ICTXT=0)
 #'
 #' Global to local coords.
 #'
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #'
 #' @param ind
 #' Matrix indices.
@@ -264,7 +272,9 @@ base.dim0 <- function(dim, ICTXT=0)
 #' BLACS context.
 #' @param dim
 #' Ignored; will be removed in a future version.
+#' @return Local coords.
 #'
+#' @useDynLib pbdBASE g2l_coords
 #' @name g2l_coord
 #' @rdname g2l_coord
 #' @export
@@ -288,7 +298,7 @@ base.g2l_coord <- function(ind, bldim, ICTXT=0, dim=NULL)
   # out will be a length 6 vector of NA when that global coord is not
   # relevant to the local storage
   
-  return(out)
+  out
 }
 
 #' @rdname g2l_coord
@@ -301,7 +311,7 @@ g2l_coord <- base.g2l_coord
 #'
 #' Local to global coords.
 #'
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #'
 #' @param ind
 #' Matrix indices.
@@ -311,7 +321,9 @@ g2l_coord <- base.g2l_coord
 #' BLACS context.
 #' @param dim
 #' Ignored; will be removed in a future version.
+#' @return Global coords.
 #'
+#' @useDynLib pbdBASE l2g_coords
 #' @name l2g_coord
 #' @rdname l2g_coord
 #' @export
@@ -322,8 +334,7 @@ base.l2g_coord <- function(ind, bldim, ICTXT=0, dim=NULL)
   myproc <- c(blacs_$MYROW, blacs_$MYCOL)
   
   out <- .Call(l2g_coords, ind=as.integer(ind), bldim=as.integer(bldim), procs=as.integer(procs), src=as.integer(myproc))
-  
-  return(out)
+  out
 }
 
 #' @rdname l2g_coord

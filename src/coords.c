@@ -4,7 +4,10 @@
 
 // Copyright 2015, Schmidt
 
+
+// R.h and Rinternals.h needs to be included after Rconfig.h
 #include "pbdBASE.h"
+#include <RNACI.h>
 
 
 // C translation of indxg2l
@@ -96,4 +99,3 @@ SEXP R_g2lcoord(SEXP dim, SEXP bldim, SEXP gi, SEXP gj, SEXP gridinfo)
   R_END;
   return ret;
 }
-

@@ -2,7 +2,7 @@
 #' 
 #' Get the local index given global information.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param INDXGLOB
 #' Global index.
@@ -16,6 +16,7 @@
 #' The coordinate of the process that possesses the first row/column of the distributed matrix.  That's always 0 pbdDMAT.
 #' @param NPROCS
 #' Total number of processors over which matrix is distributed.
+#' @return The local index.
 #' 
 #' @name coords
 #' @rdname coords
@@ -23,8 +24,7 @@
 indxg2l <- function(INDXGLOB, NB, IPROC, ISRCPROC, NPROCS)
 {
   indx <- NB*as.integer((INDXGLOB - 1L)/(NB*NPROCS)) + ((INDXGLOB - 1L)%%NB) + 1L
-  
-  return( indx )
+  indx
 }
 
 #' @name coords
@@ -37,7 +37,7 @@ indxl2g <- function(INDXLOC, NB, IPROC, ISRCPROC, NPROCS)
           ((NPROCS+IPROC-ISRCPROC)%%NPROCS)*NB + 
           1L
   
-  return( indx )
+  indx
 }
 
 
@@ -46,7 +46,7 @@ indxl2g <- function(INDXLOC, NB, IPROC, ISRCPROC, NPROCS)
 #' 
 #' Get the local index-pair given global information.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param gi,gj
 #' Global indices.
@@ -56,6 +56,7 @@ indxl2g <- function(INDXLOC, NB, IPROC, ISRCPROC, NPROCS)
 #' Blocking dimension
 #' @param ICTXT
 #' BLACS context.
+#' @return The local index-pair.
 #' 
 #' @name coordspair
 #' @rdname coordspair
@@ -69,7 +70,7 @@ g2lpair <- function(gi, gj, bldim, ICTXT)
   i <- indxg2l(gi, bldim[1L], 0L, 0L, grid$NPROW)
   j <- indxg2l(gj, bldim[2L], 0L, 0L, grid$NPCOL)
   
-  return( c(i, j) )
+  c(i, j)
 }
 
 #' @name coordspair
@@ -82,7 +83,7 @@ l2gpair <- function(i, j, bldim, ICTXT)
   gi <- indxl2g(i, bldim[1L], grid$MYROW, 0L, grid$NPROW)
   gj <- indxl2g(j, bldim[2L], grid$MYCOL, 0L, grid$NPCOL)
   
-  return( c(gi, gj) )
+  c(gi, gj)
 }
 
 
@@ -93,7 +94,7 @@ l2gpair <- function(i, j, bldim, ICTXT)
 #' distributed matrix specified by a global index INDXGLOB.  
 #' Simplified reimplementation of the ScaLAPACK aux INDXG2P function.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param INDXGLOB
 #' Global index.
@@ -101,16 +102,15 @@ l2gpair <- function(i, j, bldim, ICTXT)
 #' Block size.
 #' @param NPROCS
 #' Total number of processors over which matrix is distributed.
+#' @return The process coordinate.
 #' 
 #' @export
 base.indxg2p <- function(INDXGLOB, NB, NPROCS)
 {
-    
-    ISRCPROC <- 0L
-    
-    ret <- (ISRCPROC + as.integer((INDXGLOB - 1L) / NB)) %% NPROCS
-    
-    return( ret )
+  ISRCPROC <- 0L
+  
+  ret <- (ISRCPROC + as.integer((INDXGLOB - 1L) / NB)) %% NPROCS
+  ret
 }
 
 
@@ -120,7 +120,7 @@ base.indxg2p <- function(INDXGLOB, NB, NPROCS)
 #' A better version of NUMROC (NUMber Rows Or Columns).  Returns the local
 #' dimension given global matrix + distribution parameters.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param N
 #' Global number of rows/cols.
@@ -130,26 +130,27 @@ base.indxg2p <- function(INDXGLOB, NB, NPROCS)
 #' Coordinate of the process whose local info is to be determined.
 #' @param NPROCS
 #' Total number of processors over which matrix is distributed.
+#' @return The local dimension.
 #' 
 #' @export
 numroc2 <- function(N, NB, IPROC, NPROCS)
 {
-    ISRCPROC <- 0L
-    
-    MYDIST <- (NPROCS + IPROC - ISRCPROC) %% NPROCS
-    NBLOCKS <- as.integer(N / NB)
-    ldim <- as.integer(NBLOCKS / NPROCS) * NB
-    EXTRABLKS <- NBLOCKS %% NPROCS
-    
-    if (is.na(EXTRABLKS))
-        EXTRABLKS <- 0L
-    
-    if (MYDIST < EXTRABLKS)
-        ldim <- ldim + NB
-    else if (MYDIST == EXTRABLKS)
-        ldim <- ldim + N %% NB
-    
-    return(ldim)
+  ISRCPROC <- 0L
+  
+  MYDIST <- (NPROCS + IPROC - ISRCPROC) %% NPROCS
+  NBLOCKS <- as.integer(N / NB)
+  ldim <- as.integer(NBLOCKS / NPROCS) * NB
+  EXTRABLKS <- NBLOCKS %% NPROCS
+  
+  if (is.na(EXTRABLKS))
+    EXTRABLKS <- 0L
+  
+  if (MYDIST < EXTRABLKS)
+    ldim <- ldim + NB
+  else if (MYDIST == EXTRABLKS)
+    ldim <- ldim + N %% NB
+  
+  ldim
 }
 
 
@@ -177,21 +178,26 @@ numroc2 <- function(N, NB, IPROC, NPROCS)
 #' @keywords BLACS
 #' 
 #' @examples
-#' spmd.code = "
+#' spmd.code <- "
+#'   suppressMessages(library(pbdMPI))
 #'   suppressMessages(library(pbdBASE))
 #'   init.grid()
 #' 
-#'   blacs_ <- blacs(ICTXT = 0)
+#'   ### get the ICTXT = 0 BLACS coordsinates for process 3
+#'   myCoords <- base.pcoord(ICTXT = 0, PNUM = 3)
+#'   comm.print(myCoords)
 #' 
-#'   # get the ICTXT = 0 BLACS coordsinates for process 0
-#'   myCoords <- base.pcoord(ICTXT = 0, PNUM = 0)
-#' 
+#'   ### get the ICTXT = 1 BLACS coordsinates for process 3
+#'   myCoords <- base.pcoord(ICTXT = 1, PNUM = 3)
+#'   comm.print(myCoords)
+#'
+#'   ### get the ICTXT = 2 BLACS coordsinates for process 3
+#'   myCoords <- base.pcoord(ICTXT = 2, PNUM = 3)
 #'   comm.print(myCoords)
 #' 
 #'   finalize()
 #' "
-#' 
-#' pbdMPI::execmpi(spmd.code = spmd.code, nranks = 2L)
+#' pbdMPI::execmpi(spmd.code = spmd.code, nranks = 4L)
 #' 
 #' @name pcoords
 #' @rdname pcoords
@@ -202,7 +208,7 @@ base.pnum <- function(ICTXT, PROW, PCOL)
   NPCOL <- blacs_$NPCOL
   
   PNUM <- PROW * NPCOL + PCOL
-  return( PNUM )
+  PNUM
 }
 
 pnum <- base.pnum
@@ -219,7 +225,7 @@ base.pcoord <- function(ICTXT, PNUM)
   PROW <- as.integer(PNUM / nprows)
   PCOL <- PNUM %% nprows
   
-  return( list(PROW=PROW, PCOL=PCOL) )
+  list(PROW=PROW, PCOL=PCOL)
 }
 
 pcoord <- base.pcoord
@@ -245,6 +251,7 @@ pcoord <- base.pcoord
 #' \code{(gi, gj)}, the return is the local index.  Otherwise, \code{NA}
 #' is returned.
 #' 
+#' @useDynLib pbdBASE R_g2lcoord
 #' @export
 g2lcoord <- function(dim, bldim, gi, gj, gridinfo)
 {

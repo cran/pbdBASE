@@ -1,6 +1,6 @@
 #' Level 2 R-like BLAS
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x
 #' Matrix.
@@ -11,6 +11,7 @@
 #' @param FUN
 #' Function.
 #' 
+#' @useDynLib pbdBASE R_RL2BLAS
 #' @export
 base.rl2blas <- function(x, descx, vec, FUN)
 {
@@ -23,14 +24,14 @@ base.rl2blas <- function(x, descx, vec, FUN)
   ret <- .Call(R_RL2BLAS, 
                x, as.integer(dim(x)), as.integer(descx), vec, as.integer(length(vec)), as.integer(FUN))
   
-  return(ret)
+  ret
 }
 
 
 
 #' R-like Matrix-Vector Insertion
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x
 #' Matrix.
@@ -41,6 +42,7 @@ base.rl2blas <- function(x, descx, vec, FUN)
 #' @param i,j
 #' Indices.
 #' 
+#' @useDynLib pbdBASE R_RL2INSERT
 #' @export
 base.rl2insert <- function(x, descx, vec, i, j)
 {
@@ -65,14 +67,14 @@ base.rl2insert <- function(x, descx, vec, i, j)
   ret <- .Call(R_RL2INSERT, 
                x, as.integer(dim(x)), as.integer(descx), vec, as.integer(length(vec)), as.integer(i), as.integer(length(i)), as.integer(j), as.integer(length(j)))
   
-  return( ret )
+  ret
 }
 
 
 
 #' R Column Copy
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x,y
 #' Matrix.
@@ -81,6 +83,7 @@ base.rl2insert <- function(x, descx, vec, i, j)
 #' @param xcol,ycol
 #' Columns.
 #' 
+#' @useDynLib pbdBASE R_RCOLCPY
 #' @export
 base.rcolcpy <- function(x, descx, y, descy, xcol, ycol)
 {
@@ -92,14 +95,14 @@ base.rcolcpy <- function(x, descx, y, descy, xcol, ycol)
   ret <- .Call(R_RCOLCPY, 
                x, as.integer(dim(x)), as.integer(descx), as.integer(xcol), y, as.integer(descy), as.integer(ycol), as.integer(length(ycol)))
   
-  return( ret )
+  ret
 }
 
 
 
 #' R Column Copy-2
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x,y
 #' Matrix.
@@ -108,6 +111,7 @@ base.rcolcpy <- function(x, descx, y, descy, xcol, ycol)
 #' @param xcol,ycol
 #' Columns.
 #' 
+#' @useDynLib pbdBASE R_RCOLCPY2
 #' @export
 base.rcolcpy2 <- function(x, descx, y, descy, xcol, ycol)
 {
@@ -119,14 +123,14 @@ base.rcolcpy2 <- function(x, descx, y, descy, xcol, ycol)
   ret <- .Call(R_RCOLCPY2, 
                x, as.integer(dim(x)), as.integer(descx), as.integer(xcol), as.integer(length(xcol)), y, as.integer(descy), as.integer(ycol), as.integer(length(ycol)))
   
-  return( ret )
+  ret
 }
 
 
 
 #' R Row Copy
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x,y
 #' Matrix.
@@ -135,6 +139,7 @@ base.rcolcpy2 <- function(x, descx, y, descy, xcol, ycol)
 #' @param xrow,yrow
 #' Rows.
 #' 
+#' @useDynLib pbdBASE R_RROWCPY
 #' @export
 base.rrowcpy <- function(x, descx, y, descy, xrow, yrow)
 {
@@ -146,14 +151,14 @@ base.rrowcpy <- function(x, descx, y, descy, xrow, yrow)
   ret <- .Call(R_RROWCPY, 
                x, as.integer(dim(x)), as.integer(descx), as.integer(xrow), y, as.integer(descy), as.integer(yrow), as.integer(length(yrow)))
   
-  return( ret )
+  ret
 }
 
 
 
 #' R Row Copy-2
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x,y
 #' Matrix.
@@ -162,6 +167,7 @@ base.rrowcpy <- function(x, descx, y, descy, xrow, yrow)
 #' @param xrow,yrow
 #' Rows.
 #' 
+#' @useDynLib pbdBASE R_RROWCPY2
 #' @export
 base.rrowcpy2 <- function(x, descx, y, descy, xrow, yrow)
 {
@@ -173,14 +179,14 @@ base.rrowcpy2 <- function(x, descx, y, descy, xrow, yrow)
   ret <- .Call(R_RROWCPY2, 
                x, as.integer(dim(x)), as.integer(descx), as.integer(xrow), as.integer(length(xrow)), y, as.integer(descy), as.integer(yrow), as.integer(length(yrow)))
   
-  return( ret )
+  ret
 }
 
 
 
 #' R-like Matrix-Vector Sum
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x
 #' Matrix.
@@ -189,6 +195,7 @@ base.rrowcpy2 <- function(x, descx, y, descy, xrow, yrow)
 #' @param descx,descy
 #' ScaLAPACK descriptor array.
 #' 
+#' @useDynLib pbdBASE R_PDMVSUM
 #' @export
 base.pdmvsum <- function(x, descx, y, descy)
 {
@@ -201,6 +208,5 @@ base.pdmvsum <- function(x, descx, y, descy)
   ret <- .Call(R_PDMVSUM, 
                x, as.integer(dim(x)), as.integer(descx), y, as.integer(descy))
   
-  return(ret)
+  ret
 }
-

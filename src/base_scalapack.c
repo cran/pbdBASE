@@ -4,20 +4,15 @@
 
 // Copyright 2013-2015, Schmidt and Chen
 
+
+#include "base/linalg/linalg.h"
+#include "base/utils/utils.h"
+#include "blacs.h"
+#include "scalapack.h"
+
+// R.h and Rinternals.h needs to be included after Rconfig.h
 #include "pbdBASE.h"
-
-
-SEXP R_NUMROC(SEXP N, SEXP NB, SEXP IPROC, SEXP NPROCS)
-{
-  R_INIT;
-  SEXP NUM;
-  newRvec(NUM, 1, "int");
-  
-  numrocwrap_(INTP(N), INTP(NB), INTP(IPROC), INTP(NPROCS), INTP(NUM));
-  
-  R_END;
-  return NUM;
-}
+#include <RNACI.h>
 
 
 // -------------------------------------------------------- 
@@ -124,10 +119,19 @@ SEXP R_PDSYEVR(SEXP JOBZ, SEXP UPLO, SEXP N, SEXP A, SEXP DESCA, SEXP DESCZ)
   //     &tmp, &tmp, &IJ, &IJ, INTP(DESCZ),
   //     &temp_work, &lwork, INTP(INFO));
   
+#ifdef FC_LEN_T
+  pdsyevr_(CHARPT(JOBZ, 0), &range, CHARPT(UPLO, 0), INTP(N),
+    &tmp, &IJ, &IJ, INTP(DESCA), &tmp, &tmp, &itmp, &itmp,
+    &m, &nz, DBLP(W), DBLP(Z), &IJ, &IJ, INTP(DESCZ),
+    &temp_work, &lwork, &liwork, &liwork, INTP(INFO),
+    (FC_LEN_T) strlen(CHARPT(JOBZ, 0)), (FC_LEN_T) strlen(&range),
+    (FC_LEN_T) strlen(CHARPT(UPLO, 0)));
+#else
   pdsyevr_(CHARPT(JOBZ, 0), &range, CHARPT(UPLO, 0), INTP(N),
     &tmp, &IJ, &IJ, INTP(DESCA), &tmp, &tmp, &itmp, &itmp,
     &m, &nz, DBLP(W), DBLP(Z), &IJ, &IJ, INTP(DESCZ),
     &temp_work, &lwork, &liwork, &liwork, INTP(INFO));
+#endif
   
   /* Allocate workspace and calculate */
   const size_t size = nrows(A)*ncols(A);
@@ -141,10 +145,19 @@ SEXP R_PDSYEVR(SEXP JOBZ, SEXP UPLO, SEXP N, SEXP A, SEXP DESCA, SEXP DESCZ)
   liwork = nonzero(liwork);
   iwork = (int *) R_alloc(liwork, sizeof(*iwork));
   
+#ifdef FC_LEN_T
+  pdsyevr_(CHARPT(JOBZ, 0), &range, CHARPT(UPLO, 0), INTP(N),
+    A_cp, &IJ, &IJ, INTP(DESCA), &tmp, &tmp, &itmp, &itmp,
+    &m, &nz, DBLP(W), DBLP(Z), &IJ, &IJ, INTP(DESCZ),
+    work, &lwork, iwork, &liwork, INTP(INFO),
+    (FC_LEN_T) strlen(CHARPT(JOBZ, 0)), (FC_LEN_T) strlen(&range),
+    (FC_LEN_T) strlen(CHARPT(UPLO, 0)));
+#else
   pdsyevr_(CHARPT(JOBZ, 0), &range, CHARPT(UPLO, 0), INTP(N),
     A_cp, &IJ, &IJ, INTP(DESCA), &tmp, &tmp, &itmp, &itmp,
     &m, &nz, DBLP(W), DBLP(Z), &IJ, &IJ, INTP(DESCZ),
     work, &lwork, iwork, &liwork, INTP(INFO));
+#endif
   
   // pdsyev_(CHARPT(JOBZ, 0), CHARPT(UPLO, 0), INTP(N),
   //     A_cp, &IJ, &IJ, INTP(DESCA),
@@ -212,7 +225,12 @@ SEXP R_PDPOTRF(SEXP N, SEXP A, SEXP DESCA, SEXP UPLO)
   
   INT(INFO, 0) = 0;
   
+#ifdef FC_LEN_T
+  pdpotrf_(STR(UPLO, 0), INTP(N), DBLP(C), &IJ, &IJ, INTP(DESCA), INTP(INFO),
+    (FC_LEN_T) strlen(STR(UPLO, 0)));
+#else
   pdpotrf_(STR(UPLO, 0), INTP(N), DBLP(C), &IJ, &IJ, INTP(DESCA), INTP(INFO));
+#endif
   
   // Manage return
   make_list_names(RET_NAMES, 2, "info", "A");
@@ -274,6 +292,17 @@ SEXP R_PDSYEVX(SEXP JOBZ, SEXP RANGE, SEXP N, SEXP A, SEXP DESCA, SEXP VL, SEXP 
   liwork = -1;
   info = 0;
   
+#ifdef FC_LEN_T
+  pdsyevx_(CHARPT(JOBZ, 0), CHARPT(RANGE, 0), &uplo, 
+    INTP(N), a, &IJ, &IJ, INTP(DESCA), 
+    DBLP(VL), DBLP(VU), INTP(IL), INTP(IU), 
+    DBLP(ABSTOL), &m, &nz, w, 
+    DBLP(ORFAC), z, &IJ, &IJ, descz, 
+    &tmp_lwork, &lwork, &tmp_liwork, &liwork, 
+    ifail, iclustr, gap, &info,
+    (FC_LEN_T) strlen(CHARPT(JOBZ, 0)), (FC_LEN_T) strlen(CHARPT(RANGE, 0)),
+    (FC_LEN_T) strlen(&uplo));
+#else
   pdsyevx_(CHARPT(JOBZ, 0), CHARPT(RANGE, 0), &uplo, 
     INTP(N), a, &IJ, &IJ, INTP(DESCA), 
     DBLP(VL), DBLP(VU), INTP(IL), INTP(IU), 
@@ -281,6 +310,7 @@ SEXP R_PDSYEVX(SEXP JOBZ, SEXP RANGE, SEXP N, SEXP A, SEXP DESCA, SEXP VL, SEXP 
     DBLP(ORFAC), z, &IJ, &IJ, descz, 
     &tmp_lwork, &lwork, &tmp_liwork, &liwork, 
     ifail, iclustr, gap, &info);
+#endif
   
   lwork = nonzero( ((int) tmp_lwork) );
   work = (double*) R_alloc(lwork, sizeof(double));
@@ -292,6 +322,17 @@ SEXP R_PDSYEVX(SEXP JOBZ, SEXP RANGE, SEXP N, SEXP A, SEXP DESCA, SEXP VL, SEXP 
   m = 0;
   info = 0;
   
+#ifdef FC_LEN_T
+  pdsyevx_(CHARPT(JOBZ, 0), CHARPT(RANGE, 0), &uplo, 
+    INTP(N), a, &IJ, &IJ, INTP(DESCA), 
+    DBLP(VL), DBLP(VU), INTP(IL), INTP(IU), 
+    DBLP(ABSTOL), &m, &nz, w, 
+    DBLP(ORFAC), z, &IJ, &IJ, descz, 
+    work, &lwork, iwork, &liwork, 
+    ifail, iclustr, gap, &info,
+    (FC_LEN_T) strlen(CHARPT(JOBZ, 0)), (FC_LEN_T) strlen(CHARPT(RANGE, 0)),
+    (FC_LEN_T) strlen(&uplo));
+#else
   pdsyevx_(CHARPT(JOBZ, 0), CHARPT(RANGE, 0), &uplo, 
     INTP(N), a, &IJ, &IJ, INTP(DESCA), 
     DBLP(VL), DBLP(VU), INTP(IL), INTP(IU), 
@@ -299,6 +340,7 @@ SEXP R_PDSYEVX(SEXP JOBZ, SEXP RANGE, SEXP N, SEXP A, SEXP DESCA, SEXP VL, SEXP 
     DBLP(ORFAC), z, &IJ, &IJ, descz, 
     work, &lwork, iwork, &liwork, 
     ifail, iclustr, gap, &info);
+#endif
   
   
   newRvec(W, m, "dbl");
@@ -352,7 +394,12 @@ SEXP R_PDLANGE(SEXP TYPE, SEXP M, SEXP N, SEXP A, SEXP DESCA)
   SEXP VAL;
   newRvec(VAL, 1, "dbl");
   
+#ifdef FC_LEN_T
+  matnorm_(DBLP(VAL), STR(TYPE, 0), INTP(M), INTP(N), DBLP(A), &IJ, &IJ, INTP(DESCA),
+    (FC_LEN_T) strlen(STR(TYPE, 0)));
+#else
   matnorm_(DBLP(VAL), STR(TYPE, 0), INTP(M), INTP(N), DBLP(A), &IJ, &IJ, INTP(DESCA));
+#endif
   
   R_END;
   return VAL;
@@ -376,7 +423,12 @@ SEXP R_PDGECON(SEXP TYPE, SEXP M, SEXP N, SEXP A, SEXP DESCA)
   memcpy(cpA, DBLP(A), m*n*sizeof(*cpA));
   
   // compute inverse of condition number
+#ifdef FC_LEN_T
+  condnum_(CHARPT(TYPE, 0), INTP(M), INTP(N), cpA, &IJ, &IJ, INTP(DESCA), DBLP(RET), &info,
+    (FC_LEN_T) strlen(CHARPT(TYPE, 0)));
+#else
   condnum_(CHARPT(TYPE, 0), INTP(M), INTP(N), cpA, &IJ, &IJ, INTP(DESCA), DBLP(RET), &info);
+#endif
   
   DBL(RET, 1) = (double) info;
   
@@ -402,9 +454,17 @@ SEXP R_PDTRCON(SEXP TYPE, SEXP UPLO, SEXP DIAG, SEXP N, SEXP A, SEXP DESCA)
   newRvec(RET, 2, "dbl");
   
   // workspace query and allocate work vectors
+#ifdef FC_LEN_T
+  pdtrcon_(CHARPT(TYPE, 0), CHARPT(UPLO, 0), CHARPT(DIAG, 0),
+    INTP(N), DBLP(A), &IJ, &IJ, INTP(DESCA), DBLP(RET), 
+    &tmp, &in1, &liwork, &in1, &info,
+    (FC_LEN_T) strlen(CHARPT(TYPE, 0)), (FC_LEN_T) strlen(CHARPT(UPLO, 0)),
+    (FC_LEN_T) strlen(CHARPT(DIAG, 0)));
+#else
   pdtrcon_(CHARPT(TYPE, 0), CHARPT(UPLO, 0), CHARPT(DIAG, 0),
     INTP(N), DBLP(A), &IJ, &IJ, INTP(DESCA), DBLP(RET), 
     &tmp, &in1, &liwork, &in1, &info);
+#endif
   
   lwork = (int) tmp;
   work = malloc(lwork * sizeof(*work));
@@ -412,14 +472,126 @@ SEXP R_PDTRCON(SEXP TYPE, SEXP UPLO, SEXP DIAG, SEXP N, SEXP A, SEXP DESCA)
   
   // compute inverse of condition number
   info = 0;
+#ifdef FC_LEN_T
+  pdtrcon_(CHARPT(TYPE, 0), CHARPT(UPLO, 0), CHARPT(DIAG, 0),
+    INTP(N), DBLP(A), &IJ, &IJ, INTP(DESCA), DBLP(RET), 
+    work, &lwork, iwork, &liwork, &info,
+    (FC_LEN_T) strlen(CHARPT(TYPE, 0)), (FC_LEN_T) strlen(CHARPT(UPLO, 0)),
+    (FC_LEN_T) strlen(CHARPT(DIAG, 0)));
+#else
   pdtrcon_(CHARPT(TYPE, 0), CHARPT(UPLO, 0), CHARPT(DIAG, 0),
     INTP(N), DBLP(A), &IJ, &IJ, INTP(DESCA), DBLP(RET), 
     work, &lwork, iwork, &liwork, &info);
+#endif
   
   DBL(RET, 1) = (double) info;
   
   free(work);
   free(iwork);
+  
+  R_END;
+  return RET;
+}
+
+
+
+static inline int det(double *const restrict a, const int *const restrict desca, double *const restrict modulus, int *const restrict sign)
+{
+  int ldm[2];
+  int blacs[5];
+  pdims_(desca, ldm, blacs);
+  int m = ldm[0];
+  
+  int lipiv = ldm[0] + desca[4];
+  
+  // factor A = LU
+  int info = 0;
+  int IJ = 1;
+  int *ipiv = malloc(lipiv * sizeof(*ipiv));
+  pdgetrf_(desca+2, desca+3, a, &IJ, &IJ, desca, ipiv, &info);
+  
+  if (info != 0)
+  {
+    if (info > 0)
+    {
+      *sign = 1;
+      *modulus = R_NegInf;
+      return 0;
+    }
+    else
+    {
+      free(ipiv);
+      return info;
+    }
+  }
+  
+  
+  // get determinant
+  double mod = 0.0;
+  int sgn = 1;
+  
+  for (int j=0; j<ldm[1]; j++)
+  {
+    for (int i=0; i<m; i++)
+    {
+      int gi, gj;
+      int i1 = i+1;
+      int j1 = j+1;
+      l2gpair_(&i1, &j1, &gi, &gj, desca, blacs);
+      if (ipiv[i] != (gi + 1))
+        sgn = -sgn;
+      
+      if (gi == gj)
+      {
+        double d = a[i + m*j];
+        if (d < 0)
+        {
+          mod += log(-d);
+          sgn *= -1;
+        }
+        else
+          mod += log(d);
+      }
+    }
+  }
+  
+  free(ipiv);
+  
+  int ictxt = desca[1];
+  char scope = 'A';
+  char top = ' ';
+  
+  Cdgsum2d(ictxt, &scope, &top, 1, 1, &mod, 1, -1, -1);
+  
+  sgn = sgn < 0 ? 1 : 0;
+  Cigsum2d(ictxt, &scope, &top, 1, 1, &sgn, 1, -1, -1);
+  sgn = (sgn % 2 == 0) ? 1 : -1;
+  
+  *modulus = mod;
+  *sign = sgn;
+  
+  
+  return info;
+}
+
+SEXP R_det(SEXP A, SEXP DESCA)
+{
+  R_INIT;
+  SEXP RET, RET_NAMES, INFO, MOD, SGN;
+  
+  newRvec(MOD, 1, "double");
+  newRvec(SGN, 1, "int");
+  newRvec(INFO, 1, "int");
+  
+  double *a = malloc(nrows(A)*ncols(A) * sizeof(*a));
+  memcpy(a, DBLP(A), nrows(A)*ncols(A) * sizeof(*a));
+  
+  INT(INFO) = det(a, INTP(DESCA), DBLP(MOD), INTP(SGN));
+  
+  free(a);
+  
+  make_list_names(RET_NAMES, 3, "modulus", "sign", "info");
+  make_list(RET, RET_NAMES, 3, MOD, SGN, INFO);
   
   R_END;
   return RET;

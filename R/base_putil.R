@@ -2,13 +2,35 @@
 #' 
 #' (Un)Distribute matrix.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x
 #' Matrix.
 #' @param descx
 #' ScaLAPACK descriptor array.
 #' 
+#' @examples
+#' spmd.code <- "
+#'   suppressMessages(library(pbdMPI))
+#'   suppressMessages(library(pbdBASE))
+#'   init.grid()
+#'
+#'   ### Set data matrix and desc.
+#'   x <- matrix(as.double(1:30), nrow = 6, ncol = 5)
+#'   dim <- dim(x)
+#'   bldim <- c(3L, 3L)
+#'   ldim <- base.numroc(dim = dim, bldim = bldim)
+#'   descx <- base.descinit(dim = dim, bldim = bldim, ldim = ldim)
+#'
+#'   ### Redistribute from rank 0.
+#'   dx <- base.mksubmat(x, descx)
+#'   comm.print(dx, all.rank = TRUE)
+#'
+#'   finalize()
+#' "
+#' pbdMPI::execmpi(spmd.code = spmd.code, nranks = 2L)
+#' 
+#' @useDynLib pbdBASE R_MKSUBMAT
 #' @rdname lclgblmat
 #' @export
 base.mksubmat <- function(x, descx)
@@ -19,14 +41,15 @@ base.mksubmat <- function(x, descx)
     storage.mode(x) <- "double"
   
   subx <- .Call(R_MKSUBMAT, x, as.integer(ldim), as.integer(descx))
-  
-  return( subx )
+  subx
 }
 
 
 
 #' @param rsrc,csrc
 #' Row/column source.
+#' 
+#' @useDynLib pbdBASE R_MKGBLMAT
 #' @rdname lclgblmat
 #' @export
 base.mkgblmat <- function(x, descx, rsrc, csrc)
@@ -37,37 +60,7 @@ base.mkgblmat <- function(x, descx, rsrc, csrc)
   ret <- .Call(R_MKGBLMAT, 
        x, as.integer(descx), as.integer(rsrc), as.integer(csrc))
   
-  return( ret )
-  
-}
-
-
-
-#' dallreduce
-#' 
-#' Allreduce
-#' 
-#' For advanced users only.
-#' 
-#' @param x
-#' Matrix.
-#' @param descx
-#' ScaLAPACK descriptor array.
-#' @param op
-#' Operation.
-#' @param scope
-#' Rows, columns, or both.
-#' 
-#' @export
-base.dallreduce <- function(x, descx, op='sum', scope='All')
-{
-  if (!is.double(x))
-    storage.mode(x) <- "double"
-  
-  ret <- .Call(R_DALLREDUCE, 
-        x, as.integer(dim(x)), as.integer(descx), as.character(op), as.character(scope))
-  
-  return( ret )
+  ret
 }
 
 
@@ -76,7 +69,7 @@ base.dallreduce <- function(x, descx, op='sum', scope='All')
 #' 
 #' Zero Triangle
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x
 #' Matrix.
@@ -87,6 +80,7 @@ base.dallreduce <- function(x, descx, op='sum', scope='All')
 #' @param diag
 #' Zero diagonal as well.
 #' 
+#' @useDynLib pbdBASE R_PTRI2ZERO
 #' @export
 base.tri2zero <- function(x, descx, uplo='L', diag='N')
 {
@@ -99,7 +93,7 @@ base.tri2zero <- function(x, descx, uplo='L', diag='N')
   ret <- .Call(R_PTRI2ZERO, 
                uplo, diag, x, as.integer(dim(x)), as.integer(descx))
   
-  return( ret )
+  ret
 }
 
 
@@ -108,7 +102,7 @@ base.tri2zero <- function(x, descx, uplo='L', diag='N')
 #' 
 #' Matrix-Vector Sweep
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x
 #' Matrix.
@@ -121,6 +115,7 @@ base.tri2zero <- function(x, descx, uplo='L', diag='N')
 #' @param FUN
 #' Function.
 #' 
+#' @useDynLib pbdBASE R_PDSWEEP
 #' @export
 base.pdsweep <- function(x, descx, vec, MARGIN, FUN)
 {
@@ -133,7 +128,7 @@ base.pdsweep <- function(x, descx, vec, MARGIN, FUN)
   ret <- .Call(R_PDSWEEP, 
                x, as.integer(dim(x)), as.integer(descx), vec, as.integer(length(vec)), as.integer(MARGIN), as.character(FUN))
   
-  return( ret )
+  ret
 }
 
 
@@ -142,7 +137,7 @@ base.pdsweep <- function(x, descx, vec, MARGIN, FUN)
 #' 
 #' Grab diagonal or create distributed diagonal matrix.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param x
 #' Matrix.
@@ -150,7 +145,30 @@ base.pdsweep <- function(x, descx, vec, MARGIN, FUN)
 #' ScaLAPACK descriptor array.
 #' @param proc.dest
 #' Who owns the result.
+#' @return diagonal elements of matrix or a diagonal matrix
 #' 
+#' @examples
+#' spmd.code <- "
+#'   suppressMessages(library(pbdMPI))
+#'   suppressMessages(library(pbdBASE))
+#'   init.grid()
+#'
+#'   ### Set data matrix and desc.
+#'   x <- matrix(as.double(1:25), nrow = 5, ncol = 5)
+#'   dim <- dim(x)
+#'   bldim <- c(3L, 3L)
+#'   ldim <- base.numroc(dim = dim, bldim = bldim)
+#'   descx <- base.descinit(dim = dim, bldim = bldim, ldim = ldim)
+#'
+#'   ### Get diagonal
+#'   diag.x <- base.ddiagtk(x, descx)
+#'   comm.print(diag.x)
+#'
+#'   finalize()
+#' "
+#' pbdMPI::execmpi(spmd.code = spmd.code, nranks = 2L)
+#'
+#' @useDynLib pbdBASE R_PDGDGTK
 #' @name diag
 #' @rdname diag
 #' @export
@@ -175,12 +193,35 @@ base.ddiagtk <- function(x, descx, proc.dest='all')
                x, as.integer(dim(x)), as.integer(descx), as.integer(ldiag),
                as.integer(rdest), as.integer(cdest))
   
-  return( ret )
+  ret
 }
 
 #' @param diag
 #' Diagonal.
 #' 
+#' @examples
+#' spmd.code <- "
+#'   suppressMessages(library(pbdMPI))
+#'   suppressMessages(library(pbdBASE))
+#'   init.grid()
+#'
+#'   ### Set data matrix and desc.
+#'   x <- matrix(as.double(1:25), nrow = 5, ncol = 5)
+#'   dim <- dim(x)
+#'   bldim <- c(3L, 3L)
+#'   ldim <- base.numroc(dim = dim, bldim = bldim)
+#'   descx <- base.descinit(dim = dim, bldim = bldim, ldim = ldim)
+#'
+#'   ### Set diagonal
+#'   diag.x <- base.ddiagtk(x, descx)
+#'   new.x <- base.ddiagmk(diag.x, descx)
+#'   comm.print(new.x, all.rank = TRUE)
+#'
+#'   finalize()
+#' "
+#' pbdMPI::execmpi(spmd.code = spmd.code, nranks = 2L)
+#'
+#' @useDynLib pbdBASE R_PDDIAGMK
 #' @rdname diag
 #' @export
 base.ddiagmk <- function(diag, descx)
@@ -193,7 +234,7 @@ base.ddiagmk <- function(diag, descx)
   out <- .Call(R_PDDIAGMK, 
                as.integer(ldim), as.integer(descx), diag, as.integer(length(diag)))
   
-  return( out )
+  out
 }
 
 
@@ -202,19 +243,19 @@ base.ddiagmk <- function(diag, descx)
 #' 
 #' Create Hilbert matrix.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param n
 #' Size.
 #' 
+#' @useDynLib pbdBASE R_DHILBMK
 #' @export
 base.dhilbmk <- function(n)
 {
   n <- as.integer(n)
   
   ret <- .Call(R_DHILBMK, n)
-  
-  return( ret )
+  ret
 }
 
 
@@ -223,11 +264,12 @@ base.dhilbmk <- function(n)
 #' 
 #' Create Hilbert matrix.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param descx
 #' ScaLAPACK descriptor matrix.
 #' 
+#' @useDynLib pbdBASE R_PDHILBMK
 #' @export
 base.pdhilbmk <- function(descx)
 {
@@ -235,8 +277,7 @@ base.pdhilbmk <- function(descx)
   ldim <- as.integer(base.numroc(dim=descx[3L:4L], bldim=descx[5L:6L], ICTXT=descx[2L], fixme=TRUE))
   
   ret <- .Call(R_PDHILBMK, ldim, descx)
-  
-  return( ret )
+  ret
 }
 
 
@@ -245,13 +286,14 @@ base.pdhilbmk <- function(descx)
 #' 
 #' Create Companion Matrix
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param coef
 #' Coefficients vector.
 #' @param descx
 #' ScaLAPACK descriptor array.
 #' 
+#' @useDynLib pbdBASE R_PDMKCPN1
 #' @export
 base.pdmkcpn1 <- function(coef, descx)
 {
@@ -261,9 +303,5 @@ base.pdmkcpn1 <- function(coef, descx)
     storage.mode(coef) <- "double"
   
   out <- .Call(R_PDMKCPN1, as.integer(ldim), as.integer(descx), coef)
-  
-  return( out )
+  out
 }
-
-
-

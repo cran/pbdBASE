@@ -2,7 +2,7 @@
 #' 
 #' Crossproduct.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param uplo
 #' Triangle whose values to use.
@@ -15,6 +15,7 @@
 #' @param descc
 #' ScaLAPACK descriptor array of output.
 #' 
+#' @useDynLib pbdBASE R_PDCROSSPROD
 #' @export
 base.crossprod <- function(uplo, trans, x, descx, descc)
 {
@@ -30,7 +31,7 @@ base.crossprod <- function(uplo, trans, x, descx, descc)
                   uplo, trans, x, as.integer(descx),
                   as.integer(cldim), as.integer(descc))
   
-  return( ret )
+  ret
 }
 
 
@@ -39,7 +40,7 @@ base.crossprod <- function(uplo, trans, x, descx, descc)
 #' 
 #' Inverse of cholesky.
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param uplo
 #' Triangle whose values to use.
@@ -50,6 +51,7 @@ base.crossprod <- function(uplo, trans, x, descx, descc)
 #' @param descc
 #' ScaLAPACK descriptor array of output.
 #' 
+#' @useDynLib pbdBASE R_PDCHTRI
 #' @export
 base.pdchtri <- function(uplo, x, descx, descc)
 {
@@ -66,6 +68,5 @@ base.pdchtri <- function(uplo, x, descx, descc)
                 uplo, x, as.integer(dim(x)), as.integer(descx), 
                 as.integer(cldim), as.integer(descc))
   
-  return( ret )
+  ret
 }
-

@@ -3,8 +3,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Copyright 2012-2015, Schmidt
+#if (defined(__MINGW32__) || defined(__MINGW64__))
+  #include <_mingw.h>
+#endif
 
+#include <mpi.h>
+#include "base/utils/utils.h"
+
+// R.h and Rinternals.h needs to be included after Rconfig.h
 #include "pbdBASE.h"
+#include <RNACI.h>
+
 
 // From pbdMPI pkg_global.h and pkg_tools.c
 #define MPI_APTS_R_NAME		".__MPI_APTS__"

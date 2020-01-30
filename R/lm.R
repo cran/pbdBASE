@@ -2,7 +2,7 @@
 #' 
 #' Linear model fitter via rank-revealing QR (with pivoting).
 #' 
-#' For advanced users only.
+#' For advanced users only. See pbdDMAT for high-level functions.
 #' 
 #' @param tol 
 #' Numerical tolerance for the QR.
@@ -19,6 +19,7 @@
 #' @param descb
 #' ScaLAPACK descriptor array.
 #' 
+#' @useDynLib pbdBASE R_PDGELS
 #' @export
 base.rpdgels <- function(tol, m, n, nrhs, a, desca, b, descb)
 {
@@ -57,8 +58,5 @@ base.rpdgels <- function(tol, m, n, nrhs, a, desca, b, descb)
   if (ret$INFO!=0)
     comm.warning(paste("ScaLAPACK returned INFO=", ret$INFO, "; returned solution is likely invalid", sep=""))
   
-  return( ret )
+  ret
 }
-
-
-

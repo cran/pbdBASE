@@ -4,20 +4,23 @@
 
 // Copyright 2013, Schmidt
 
+#include <string.h>
+#include "base/linalg/linalg.h"
+
+// R.h and Rinternals.h needs to be included after Rconfig.h
 #include "pbdBASE.h"
 
 
 SEXP R_RL2BLAS(SEXP X, SEXP LDIM, SEXP DESCX, SEXP VEC, SEXP LVEC, SEXP FUN)
 {
   const int m = INTEGER(LDIM)[0], n = INTEGER(LDIM)[1];
-  int IJ = 1;
   
   SEXP CPX;
   PROTECT(CPX = allocMatrix(REALSXP, m, n));
   
   memcpy(REAL(CPX), REAL(X), m*n*sizeof(double));
   
-  rl2blas_(REAL(CPX), &IJ, &IJ, INTEGER(DESCX), REAL(VEC), INTEGER(LVEC), INTEGER(FUN));
+  rl2blas_(REAL(CPX), INTEGER(DESCX), REAL(VEC), INTEGER(LVEC), INTEGER(FUN));
   
   UNPROTECT(1);
   return CPX;
@@ -27,14 +30,13 @@ SEXP R_RL2BLAS(SEXP X, SEXP LDIM, SEXP DESCX, SEXP VEC, SEXP LVEC, SEXP FUN)
 SEXP R_RL2INSERT(SEXP X, SEXP LDIM, SEXP DESCX, SEXP VEC, SEXP LVEC, SEXP INDI, SEXP LINDI, SEXP INDJ, SEXP LINDJ)
 {
   const int m = INTEGER(LDIM)[0], n = INTEGER(LDIM)[1];
-  int IJ = 1;
   
   SEXP CPX;
   PROTECT(CPX = allocMatrix(REALSXP, m, n));
   
   memcpy(REAL(CPX), REAL(X), m*n*sizeof(double));
   
-  rl2insert_(REAL(CPX), &IJ, &IJ, INTEGER(DESCX), REAL(VEC), INTEGER(LVEC), 
+  rl2insert_(REAL(CPX), INTEGER(DESCX), REAL(VEC), INTEGER(LVEC), 
     INTEGER(INDI), INTEGER(LINDI), INTEGER(INDJ), INTEGER(LINDJ));
   
   UNPROTECT(1);
@@ -124,4 +126,3 @@ SEXP R_PDMVSUM(SEXP X, SEXP LDIM, SEXP DESCX, SEXP Y, SEXP DESCY)
   UNPROTECT(1);
   return CPX;
 }
-
