@@ -1,8 +1,8 @@
 e879eaad64aab8e1f8e63e298f5cea28 *COPYING
-e0b68fa6c39c7ef2d50af4627d2f5057 *ChangeLog
-9813fc88c80fb4a2be0d6ca439802679 *DESCRIPTION
+a8aca42350b5e42345b8befeca7b36f2 *ChangeLog
+7544c3a329fb30e1e81ad8de1706c6d2 *DESCRIPTION
 69d78b8b63b2e42c3165d1733ac68a86 *INSTALL
-e31ecdb17e45c45832f8ca7821834e95 *NAMESPACE
+7297cff436fd4b1c707fef1db96f6df7 *NAMESPACE
 e6648c89d6de324dc50aff1369cf64d7 *R/00-global.r
 aa631617a9732afb54e9c3f03a0bceb7 *R/01-env.r
 e31daf273234072210ac282198d5ff23 *R/base_mpi_blacs.r
@@ -19,7 +19,7 @@ e7fe00c05d3630ae52f8b3efcbc88943 *R/coords.r
 187f3842a2dfcf6305c1341cf9ca70fc *R/dims.r
 86e9c82c7fb299d95288c5a3f839a881 *R/lm.R
 3fc1affc4a6ca0cd7418becc66e841bc *R/matexp.r
-22606e3214549c3017c7f7f4015c55b1 *R/pbdBASE-package.r
+f6476495fb216a88573774a71ed9ef0f *R/pbdBASE-package.r
 585a2b21fa49128054d1d6ccf4db7003 *R/pkg_blacs_apts.r
 3b9696e9f32ce831fa8ac27ef60515fb *R/qr.r
 b93445f8a9a7663036442acf40204239 *R/redist.r
@@ -33,8 +33,8 @@ f2dda588bb9094d93e1032019fe9570a *configure
 d41d8cd98f00b204e9800998ecf8427e *configure.win
 ee0eab6e3855f8bc2206d4db0da4c480 *inst/CITATION
 868c2acd29d90cab7b660bbb962b999e *inst/RNACI/RNACI.h
-52626965187102e96e273bc141115c8f *inst/doc/pbdBASE-guide.Rnw
-ef3c6bb44348a7c1d487a9702838e930 *inst/doc/pbdBASE-guide.pdf
+48493820454805550af0ed2a69791c47 *inst/doc/pbdBASE-guide.Rnw
+1b624613d0cc4752e4ff146023782679 *inst/doc/pbdBASE-guide.pdf
 343d644b593b11094df837f667607e06 *man/BASE-Global-Environment.Rd
 45cc6ba55bf4422f7665263e856e1d34 *man/base.blacs_gridinit.Rd
 d4752626de52ce76589d89eb5250971e *man/base.crossprod.Rd
@@ -192,4 +192,4 @@ f5837f5f8a38cd3693b814161d590414 *vignettes/include/02-use.tex
 c361b262c34785162574e5dcd1fc559b *vignettes/include/pics/uch_small.png
 d8bd4f4422095732b8d9947e648522be *vignettes/include/preamble.tex
 77d0c1a38b9e639ac92e19e817e4c633 *vignettes/include/titlepage.tex
-52626965187102e96e273bc141115c8f *vignettes/pbdBASE-guide.Rnw
+48493820454805550af0ed2a69791c47 *vignettes/pbdBASE-guide.Rnw
