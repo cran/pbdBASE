@@ -1,6 +1,6 @@
 e879eaad64aab8e1f8e63e298f5cea28 *COPYING
-a8aca42350b5e42345b8befeca7b36f2 *ChangeLog
-7544c3a329fb30e1e81ad8de1706c6d2 *DESCRIPTION
+8d9f5b662b3e6dbf28be169a1c4baf97 *ChangeLog
+b98cb20604ab6705ad43ee5fa816a350 *DESCRIPTION
 69d78b8b63b2e42c3165d1733ac68a86 *INSTALL
 7297cff436fd4b1c707fef1db96f6df7 *NAMESPACE
 e6648c89d6de324dc50aff1369cf64d7 *R/00-global.r
@@ -26,15 +26,15 @@ b93445f8a9a7663036442acf40204239 *R/redist.r
 694936946393456fb47bcd06ceebfc63 *R/utility.r
 314755bf4b363b97fd491d14553a0f90 *R/utility_blacs.r
 cbe87c84633bbec8c047853dc1b6a6e6 *R/zzz.r
-71c311883d0a9f42f302774ce5cda01c *README.md
+78948f8fd2c4533279d19f2066728446 *README.md
 195ce5995f040c23e5987ed3f6fed920 *cleanup
 f2dda588bb9094d93e1032019fe9570a *configure
 67a5105d9b4cfac842272267e91c26f6 *configure.ac
 d41d8cd98f00b204e9800998ecf8427e *configure.win
 ee0eab6e3855f8bc2206d4db0da4c480 *inst/CITATION
 868c2acd29d90cab7b660bbb962b999e *inst/RNACI/RNACI.h
-48493820454805550af0ed2a69791c47 *inst/doc/pbdBASE-guide.Rnw
-1b624613d0cc4752e4ff146023782679 *inst/doc/pbdBASE-guide.pdf
+3b21e086bf477804b54bdc27ef01f48a *inst/doc/pbdBASE-guide.Rnw
+e2156f8a1daaa504238366075d1aff47 *inst/doc/pbdBASE-guide.pdf
 343d644b593b11094df837f667607e06 *man/BASE-Global-Environment.Rd
 45cc6ba55bf4422f7665263e856e1d34 *man/base.blacs_gridinit.Rd
 d4752626de52ce76589d89eb5250971e *man/base.crossprod.Rd
@@ -120,9 +120,9 @@ d6c1534e16e9c11a26acf8f31e85a191 *src/base/expm/matexp.h
 3e84f4c8ca6895eef3b5528a3d86b0aa *src/base/expm/p_matexp.c
 b586ba6d9ffc858ff5df06e58aac11d3 *src/base/expm/pade_coefs.c
 77dc3b097694606a1ca52f76eb0a7b8a *src/base/linalg/linalg.h
-adcbe9a050140ca20ff2ea2e3de1f100 *src/base/linalg/norms.f90
+22ca295ced2ca5591dbe3c5a386a1dc9 *src/base/linalg/norms.f90
 19f148204e0ecaf64c1e7e546b72c9f4 *src/base/linalg/pcrossprod.f90
-0997f7dbc610f02a00eb3a27c365dc02 *src/base/linalg/pinverse.f90
+3a8f94e0276d5f4ecc52f0a87dabe0fa *src/base/linalg/pinverse.f90
 031e95553f81fa22eb5a16719b7df2fb *src/base/linalg/plm.f
 4ae6994a08c2ab0f8bb535fc46ab0547 *src/base/linalg/prblas.f90
 a385e5202e9e7cc4007bf1cec5834859 *src/base/stats/stats.h
@@ -192,4 +192,4 @@ f5837f5f8a38cd3693b814161d590414 *vignettes/include/02-use.tex
 c361b262c34785162574e5dcd1fc559b *vignettes/include/pics/uch_small.png
 d8bd4f4422095732b8d9947e648522be *vignettes/include/preamble.tex
 77d0c1a38b9e639ac92e19e817e4c633 *vignettes/include/titlepage.tex
-48493820454805550af0ed2a69791c47 *vignettes/pbdBASE-guide.Rnw
+3b21e086bf477804b54bdc27ef01f48a *vignettes/pbdBASE-guide.Rnw
